@@ -97,6 +97,22 @@ export const transactionApi = {
     },
 };
 
+// Admin API
+export const adminApi = {
+    getOverview() {
+        return apiClient.get('/admin/overview');
+    },
+    getUsers(params = {}) {
+        return apiClient.get('/admin/users', { params });
+    },
+    getPendingReviews(params = {}) {
+        return apiClient.get('/admin/pending-reviews', { params });
+    },
+    getAllCampaigns(params = {}) {
+        return apiClient.get('/admin/campaigns', { params });
+    },
+};
+
 // Notification API
 export const notificationApi = {
     getAll(params = {}) {

@@ -278,10 +278,50 @@
     to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes cardEnter {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 .animate-fade-in {
     animation: fadeIn 0.2s ease-out;
 }
 
 .animate-slide-down {
     animation: slideDown 0.2s ease-out;
+}
+
+/* Vue Transitions */
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 0.2s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
+}
+
+.slide-down-enter-active,
+.slide-down-leave-active {
+    transition: all 0.2s ease-out;
+}
+.slide-down-enter-from,
+.slide-down-leave-to {
+    opacity: 0;
+    transform: translateY(-6px);
+}
+
+.campaign-card-enter-active {
+    animation: cardEnter 0.3s ease-out;
+}
+.campaign-card-leave-active {
+    transition: all 0.2s ease;
+}
+.campaign-card-enter-from,
+.campaign-card-leave-to {
+    opacity: 0;
+    transform: translateY(10px);
+}
+.campaign-card-move {
+    transition: transform 0.3s ease;
 }

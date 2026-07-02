@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\CampaignController;
 use App\Http\Controllers\Api\BackingController;
 use App\Http\Controllers\Api\NotificationController;
@@ -63,6 +64,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('notifications/{id}/read', [NotificationController::class, 'markAsRead']);
     Route::post('notifications/mark-all-read', [NotificationController::class, 'markAllAsRead']);
     Route::delete('notifications/{id}', [NotificationController::class, 'destroy']);
+
+    // Admin
+    Route::middleware('admin')->group(function () {
+        Route::get('admin/overview', [AdminController::class, 'overview']);
+        Route::get('admin/users', [AdminController::class, 'users']);
+        Route::get('admin/pending-reviews', [AdminController::class, 'pendingReviews']);
+        Route::get('admin/campaigns', [AdminController::class, 'allCampaigns']);
+    });
 
     // Transactions & Escrow
     Route::get('transactions', [TransactionController::class, 'index']);

@@ -26,6 +26,15 @@
                             >
                                 Categories
                             </router-link>
+                            <router-link
+                                v-if="appStore.user?.role === 'admin'"
+                                to="/admin"
+                                class="px-3 py-2 rounded-md text-sm font-medium text-orange-400 hover:text-orange-300 hover:bg-orange-500/10 transition-all duration-200"
+                                active-class="text-orange-300 bg-orange-500/10"
+                            >
+                                <i class="pi pi-shield mr-1"></i>
+                                Admin
+                            </router-link>
                         </div>
                     </div>
                     <div class="flex items-center space-x-2">
@@ -125,6 +134,15 @@
                             >
                                 <i class="pi pi-user mr-1.5"></i>
                                 Dashboard
+                            </router-link>
+                            <router-link
+                                v-if="appStore.user?.role === 'admin'"
+                                to="/admin"
+                                class="block px-3 py-2.5 rounded-md text-sm font-medium text-orange-400 hover:text-orange-300 hover:bg-orange-500/10 transition-all"
+                                @click="isMobileMenuOpen = false"
+                            >
+                                <i class="pi pi-shield mr-1.5"></i>
+                                Admin
                             </router-link>
                         </template>
                         <template v-else>
