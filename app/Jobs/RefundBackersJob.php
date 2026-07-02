@@ -6,7 +6,6 @@ use App\Models\Backing;
 use App\Models\Campaign;
 use App\Models\Transaction;
 use App\Models\User;
-use App\Models\UserNotification;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -74,32 +73,34 @@ class RefundBackersJob implements ShouldQueue
                     $backing->tier()->increment('remaining_quota');
                 }
 
-                // Send notification to backer
-                UserNotification::create([
-                    'user_id' => $backing->user_id,
-                    'type' => 'backing_refunded',
-                    'title' => 'Dana Dikembalikan 💰',
-                    'body' => "Kampanye \"{$campaign->title}\" tidak mencapai target. Dana sebesar Rp " . number_format($backing->amount, 0, ',', '.') . " telah dikembalikan ke saldo Anda.",
-                    'data' => [
+                // Send notification + email to backer
+                SendNotificationJob::dispatch(
+                    $backing->user_id,
+                    'backing_refunded',
+                    'Dana Dikembalikan 💰',
+                    "Kampanye \"{$campaign->title}\" tidak mencapai target. Dana sebesar Rp " . number_format($backing->amount, 0, ',', '.') . " telah dikembalikan ke saldo Anda.",
+                    [
                         'campaign_id' => $campaign->id,
                         'backing_id' => $backing->id,
                         'amount' => $backing->amount,
                     ],
-                ]);
+                    true, // send email
+                );
             }
 
-            // Send notification to creator
-            UserNotification::create([
-                'user_id' => $campaign->user_id,
-                'type' => 'campaign_failed',
-                'title' => 'Kampanye Gagal 😔',
-                'body' => "Kampanye \"{$campaign->title}\" tidak mencapai target dan telah diakhiri. Semua dana backer telah dikembalikan.",
-                'data' => [
+            // Send notification + email to creator
+            SendNotificationJob::dispatch(
+                $campaign->user_id,
+                'campaign_failed',
+                'Kampanye Gagal 😔',
+                "Kampanye \"{$campaign->title}\" tidak mencapai target dan telah diakhiri. Semua dana backer telah dikembalikan.",
+                [
                     'campaign_id' => $campaign->id,
                     'collected' => $campaign->collected_amount,
                     'target' => $campaign->target_amount,
                 ],
-            ]);
+                true, // send email
+            );
         });
     }
 }

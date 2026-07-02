@@ -2,12 +2,15 @@
 
 namespace App\Jobs;
 
+use App\Mail\CampaignNotification;
+use App\Models\User;
 use App\Models\UserNotification;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Mail;
 
 class SendNotificationJob implements ShouldQueue
 {
@@ -27,6 +30,7 @@ class SendNotificationJob implements ShouldQueue
         public string $title,
         public string $body,
         public ?array $data = null,
+        public bool $sendEmail = true,
     ) {}
 
     /**
@@ -34,6 +38,7 @@ class SendNotificationJob implements ShouldQueue
      */
     public function handle(): void
     {
+        // Create in-app notification
         UserNotification::create([
             'user_id' => $this->userId,
             'type' => $this->type,
@@ -41,5 +46,20 @@ class SendNotificationJob implements ShouldQueue
             'body' => $this->body,
             'data' => $this->data,
         ]);
+
+        // Send email if requested
+        if ($this->sendEmail) {
+            $user = User::find($this->userId);
+            if ($user && $user->email) {
+                Mail::to($user->email)->send(
+                    new CampaignNotification(
+                        user: $user,
+                        subject: $this->title,
+                        body: $this->body,
+                        data: $this->data,
+                    )
+                );
+            }
+        }
     }
 }

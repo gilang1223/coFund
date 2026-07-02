@@ -95,6 +95,13 @@
                         <span class="text-sm text-gray-300">Riwayat Transaksi</span>
                     </router-link>
                     <router-link
+                        to="/notifications"
+                        class="flex items-center gap-3 px-4 py-3 rounded-md bg-navy-800/50 hover:bg-navy-700/50 border border-navy-700 hover:border-brand-500/30 transition-all duration-200"
+                    >
+                        <i class="pi pi-bell text-yellow-400"></i>
+                        <span class="text-sm text-gray-300">Notifikasi</span>
+                    </router-link>
+                    <router-link
                         to="/campaigns"
                         class="flex items-center gap-3 px-4 py-3 rounded-md bg-navy-800/50 hover:bg-navy-700/50 border border-navy-700 hover:border-brand-500/30 transition-all duration-200"
                     >

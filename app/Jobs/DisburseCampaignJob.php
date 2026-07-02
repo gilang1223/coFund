@@ -5,7 +5,6 @@ namespace App\Jobs;
 use App\Models\Campaign;
 use App\Models\Transaction;
 use App\Models\User;
-use App\Models\UserNotification;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -72,18 +71,19 @@ class DisburseCampaignJob implements ShouldQueue
                 'reference' => 'FEE-' . strtoupper(uniqid()),
             ]);
 
-            // Send notification to creator
-            UserNotification::create([
-                'user_id' => $campaign->user_id,
-                'type' => 'campaign_success',
-                'title' => 'Kampanye Berhasil! 🎉',
-                'body' => "Selamat! Kampanye \"{$campaign->title}\" berhasil mencapai target. Dana sebesar Rp " . number_format($creatorAmount, 0, ',', '.') . " telah dicairkan ke saldo Anda (setelah fee 5%).",
-                'data' => [
+            // Send notification + email to creator
+            SendNotificationJob::dispatch(
+                $campaign->user_id,
+                'campaign_success',
+                'Kampanye Berhasil! 🎉',
+                "Selamat! Kampanye \"{$campaign->title}\" berhasil mencapai target. Dana sebesar Rp " . number_format($creatorAmount, 0, ',', '.') . " telah dicairkan ke saldo Anda (setelah fee 5%).",
+                [
                     'campaign_id' => $campaign->id,
                     'amount' => $creatorAmount,
                     'fee' => $platformFee,
                 ],
-            ]);
+                true, // send email
+            );
         });
     }
 }
