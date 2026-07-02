@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\CampaignController;
 use App\Http\Controllers\Api\BackingController;
@@ -18,6 +19,8 @@ use App\Http\Controllers\Api\BackingController;
 */
 
 // Public routes
+Route::post('register', [AuthController::class, 'register']);
+Route::post('login', [AuthController::class, 'login']);
 Route::get('categories', [CategoryController::class, 'index']);
 Route::get('categories/{id}', [CategoryController::class, 'show']);
 Route::get('campaigns', [CampaignController::class, 'index']);
@@ -26,10 +29,9 @@ Route::get('campaigns/{id}', [CampaignController::class, 'show']);
 // Authenticated routes
 Route::middleware('auth:sanctum')->group(function () {
 
-    // User
-    Route::get('/user', function (Request $request) {
-        return $request->user();
-    });
+    // Auth
+    Route::post('logout', [AuthController::class, 'logout']);
+    Route::get('user', [AuthController::class, 'user']);
 
     // Categories (admin only)
     Route::post('categories', [CategoryController::class, 'store']);
