@@ -44,6 +44,12 @@ const routes = [
                 meta: { title: 'Donasi Saya', requiresAuth: true },
             },
             {
+                path: 'transactions',
+                name: 'transactions',
+                component: () => import('@/views/MyTransactions.vue'),
+                meta: { title: 'Transaksi', requiresAuth: true },
+            },
+            {
                 path: 'login',
                 name: 'login',
                 component: () => import('@/views/Login.vue'),

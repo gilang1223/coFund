@@ -71,6 +71,26 @@ class User extends Authenticatable
     }
 
     /**
+     * Add balance to user's account.
+     */
+    public function addBalance(float $amount): void
+    {
+        $this->increment('balance', $amount);
+    }
+
+    /**
+     * Deduct balance from user's account.
+     */
+    public function deductBalance(float $amount): bool
+    {
+        if ($this->balance < $amount) {
+            return false;
+        }
+        $this->decrement('balance', $amount);
+        return true;
+    }
+
+    /**
      * Get the campaigns created by the user.
      */
     public function campaigns(): HasMany

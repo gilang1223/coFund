@@ -6,12 +6,13 @@ use App\Models\Backing;
 use App\Models\Campaign;
 use App\Models\CampaignTier;
 use App\Models\Transaction;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
 class BackingService extends BaseService
 {
     /**
-     * Create a new backing (donation).
+     * Create a new backing (donation) — funds held in escrow.
      */
     public function create(array $data): ?Backing
     {
@@ -61,7 +62,7 @@ class BackingService extends BaseService
                 'status' => 'pending',
             ]);
 
-            // Create pending transaction
+            // Create pending escrow transaction
             Transaction::create([
                 'user_id' => $data['user_id'],
                 'backing_id' => $backing->id,
@@ -76,7 +77,7 @@ class BackingService extends BaseService
     }
 
     /**
-     * Complete a backing (payment success).
+     * Complete a backing — release funds from escrow to campaign.
      */
     public function complete(int $backingId): ?Backing
     {
@@ -87,7 +88,13 @@ class BackingService extends BaseService
                 return null;
             }
 
-            $campaign = $backing->campaign;
+            $user = User::lockForUpdate()->find($backing->user_id);
+            $campaign = Campaign::lockForUpdate()->find($backing->campaign_id);
+
+            // Deduct from user's balance
+            if (!$user->deductBalance($backing->amount)) {
+                return null; // Insufficient balance
+            }
 
             // Check if adding this amount would exceed target
             $newTotal = $campaign->collected_amount + $backing->amount;
@@ -97,7 +104,15 @@ class BackingService extends BaseService
                 $adjustedAmount = $backing->amount - $excess;
 
                 if ($adjustedAmount <= 0) {
+                    // Refund the excess back to user
+                    $user->addBalance($backing->amount);
                     return null;
+                }
+
+                // Refund excess to user
+                $excessRefund = $backing->amount - $adjustedAmount;
+                if ($excessRefund > 0) {
+                    $user->addBalance($excessRefund);
                 }
 
                 $backing->update(['amount' => $adjustedAmount]);
@@ -105,25 +120,20 @@ class BackingService extends BaseService
 
             $backing->update(['status' => 'completed']);
 
-            // Update transaction
+            // Update transaction to success
             $backing->transaction()->update([
                 'status' => 'success',
             ]);
 
-            // Update campaign collected amount
+            // Increment campaign collected amount
             $campaign->increment('collected_amount', $backing->amount);
-
-            // Check if campaign has reached target
-            if ($campaign->fresh()->hasReachedTarget()) {
-                $campaign->update(['status' => 'success']);
-            }
 
             return $backing->fresh()->load(['campaign', 'tier', 'transaction']);
         });
     }
 
     /**
-     * Cancel/refund a backing.
+     * Cancel/refund a backing — release funds back to backer.
      */
     public function refund(int $backingId): ?Backing
     {
@@ -133,6 +143,11 @@ class BackingService extends BaseService
             if (!$backing || $backing->status !== 'pending') {
                 return null;
             }
+
+            $user = User::lockForUpdate()->find($backing->user_id);
+
+            // Refund to user's balance
+            $user->addBalance($backing->amount);
 
             $backing->update(['status' => 'refunded']);
 
@@ -155,7 +170,7 @@ class BackingService extends BaseService
      */
     public function getByUser(int $userId)
     {
-        return Backing::with(['campaign', 'tier'])
+        return Backing::with(['campaign', 'tier', 'transaction'])
             ->where('user_id', $userId)
             ->orderBy('created_at', 'desc')
             ->get();
@@ -166,7 +181,7 @@ class BackingService extends BaseService
      */
     public function getByCampaign(int $campaignId)
     {
-        return Backing::with(['backer', 'tier'])
+        return Backing::with(['backer', 'tier', 'transaction'])
             ->where('campaign_id', $campaignId)
             ->orderBy('created_at', 'desc')
             ->get();

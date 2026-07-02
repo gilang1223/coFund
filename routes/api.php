@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\CampaignController;
 use App\Http\Controllers\Api\BackingController;
+use App\Http\Controllers\Api\TransactionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -54,4 +55,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('backings/{id}/refund', [BackingController::class, 'refund']);
     Route::get('my-backings', [BackingController::class, 'myBackings']);
     Route::get('campaigns/{campaignId}/backings', [BackingController::class, 'campaignBackings']);
+
+    // Transactions & Escrow
+    Route::get('transactions', [TransactionController::class, 'index']);
+    Route::get('transactions/{reference}', [TransactionController::class, 'show']);
+    Route::post('campaigns/{campaignId}/disburse', [TransactionController::class, 'processDisbursement']);
+    Route::post('campaigns/{campaignId}/refund-all', [TransactionController::class, 'processRefunds']);
+    Route::post('campaigns/{campaignId}/settle', [TransactionController::class, 'settleCampaign']);
 });

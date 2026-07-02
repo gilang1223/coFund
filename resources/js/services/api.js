@@ -72,6 +72,31 @@ export const backingApi = {
     },
 };
 
+// Transaction API
+export const transactionApi = {
+    getAll() {
+        return apiClient.get('/transactions');
+    },
+    getByReference(reference) {
+        return apiClient.get(`/transactions/${reference}`);
+    },
+    completeBacking(id) {
+        return apiClient.post(`/backings/${id}/complete`);
+    },
+    refundBacking(id) {
+        return apiClient.post(`/backings/${id}/refund`);
+    },
+    disburseCampaign(campaignId) {
+        return apiClient.post(`/campaigns/${campaignId}/disburse`);
+    },
+    refundAll(campaignId) {
+        return apiClient.post(`/campaigns/${campaignId}/refund-all`);
+    },
+    settleCampaign(campaignId) {
+        return apiClient.post(`/campaigns/${campaignId}/settle`);
+    },
+};
+
 // Auth API
 export const authApi = {
     login(email, password) {
