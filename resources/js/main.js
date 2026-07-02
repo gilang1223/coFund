@@ -5,7 +5,7 @@ import ToastService from 'primevue/toastservice';
 import ConfirmationService from 'primevue/confirmationservice';
 import Tooltip from 'primevue/tooltip';
 
-import 'primevue/resources/themes/lara-light-blue/theme.css';
+import 'primevue/resources/themes/lara-dark-blue/theme.css';
 import 'primevue/resources/primevue.css';
 import 'primeicons/primeicons.css';
 
@@ -19,7 +19,10 @@ const pinia = createPinia();
 
 app.use(pinia);
 app.use(router);
-app.use(PrimeVue, { ripple: true });
+app.use(PrimeVue, {
+    ripple: true,
+    inputStyle: 'filled',
+});
 app.use(ToastService);
 app.use(ConfirmationService);
 app.directive('tooltip', Tooltip);

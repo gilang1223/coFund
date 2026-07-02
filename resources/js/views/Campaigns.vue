@@ -1,32 +1,35 @@
 <template>
-    <div class="container-page">
+    <div class="container-page animate-fade-in">
         <div class="flex items-center justify-between mb-8">
             <div>
-                <h1 class="text-2xl md:text-3xl font-bold text-gray-900">Campaigns</h1>
-                <p class="text-gray-600 mt-1">Jelajahi kampanye yang sedang berlangsung</p>
+                <h1 class="text-2xl md:text-3xl font-bold text-white">Campaigns</h1>
+                <p class="text-gray-500 mt-1">Jelajahi kampanye yang sedang berlangsung</p>
             </div>
             <router-link
                 v-if="appStore.isAuthenticated"
                 to="/campaigns/create"
-                class="inline-flex items-center px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                class="inline-flex items-center px-4 py-2 bg-brand-500 text-white font-medium rounded-md hover:bg-brand-600 transition-all duration-200"
             >
-                <i class="pi pi-plus mr-2"></i>
+                <i class="pi pi-plus mr-2 text-xs"></i>
                 New Campaign
             </router-link>
         </div>
 
         <!-- Filters -->
         <div class="flex flex-wrap gap-3 mb-6">
-            <input
-                v-model="searchQuery"
-                type="text"
-                placeholder="Cari kampanye..."
-                class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none w-full sm:w-64"
-                @input="debouncedSearch"
-            />
+            <div class="relative flex-1 min-w-[200px] max-w-sm">
+                <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm"></i>
+                <input
+                    v-model="searchQuery"
+                    type="text"
+                    placeholder="Cari kampanye..."
+                    class="input-field pl-10"
+                    @input="debouncedSearch"
+                />
+            </div>
             <select
                 v-model="filterCategory"
-                class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                class="input-field w-auto min-w-[160px]"
                 @change="fetchData"
             >
                 <option value="">Semua Kategori</option>
@@ -36,7 +39,7 @@
             </select>
             <select
                 v-model="filterStatus"
-                class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                class="input-field w-auto min-w-[140px]"
                 @change="fetchData"
             >
                 <option value="">Semua Status</option>
@@ -46,44 +49,55 @@
             </select>
         </div>
 
-        <!-- Loading -->
-        <div v-if="isLoading" class="flex justify-center py-20">
-            <i class="pi pi-spin pi-spinner text-4xl text-blue-600"></i>
+        <!-- Skeleton Loading -->
+        <div v-if="isLoading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div v-for="i in 6" :key="i" class="card overflow-hidden">
+                <div class="skeleton h-48 rounded-none"></div>
+                <div class="p-5 space-y-3">
+                    <div class="skeleton-title"></div>
+                    <div class="skeleton-text"></div>
+                    <div class="skeleton-text w-2/3"></div>
+                    <div class="skeleton h-2 w-full mt-3"></div>
+                </div>
+            </div>
         </div>
 
         <!-- Empty State -->
         <div v-else-if="campaigns.length === 0" class="text-center py-20">
-            <i class="pi pi-inbox text-gray-300 text-6xl mb-4"></i>
-            <h3 class="text-lg font-medium text-gray-900 mb-2">Tidak ada kampanye</h3>
+            <div class="w-16 h-16 rounded-md bg-navy-800 flex items-center justify-center mx-auto mb-4">
+                <i class="pi pi-inbox text-gray-600 text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-medium text-gray-300 mb-2">Tidak ada kampanye</h3>
             <p class="text-gray-500">Belum ada kampanye yang sesuai dengan filter Anda.</p>
         </div>
 
         <!-- Campaign Grid -->
-        <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             <div
                 v-for="campaign in campaigns"
                 :key="campaign.id"
-                class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all group"
+                class="card-hover overflow-hidden group"
             >
                 <router-link :to="`/campaigns/${campaign.id}`">
-                    <div class="h-48 bg-gradient-to-br from-blue-400 to-blue-600 relative">
-                        <div class="absolute inset-0 flex items-center justify-center text-white/30">
+                    <div class="h-48 bg-gradient-to-br from-brand-500/20 to-navy-800 relative">
+                        <div class="absolute inset-0 flex items-center justify-center text-navy-600">
                             <i class="pi pi-image text-6xl"></i>
                         </div>
+                        <div class="absolute inset-0 bg-gradient-to-t from-navy-800 via-transparent to-transparent"></div>
                         <div class="absolute top-3 right-3">
                             <span
                                 :class="[
-                                    'px-3 py-1 text-xs font-semibold rounded-full',
-                                    campaign.status === 'active' ? 'bg-green-100 text-green-700' :
-                                    campaign.status === 'success' ? 'bg-blue-100 text-blue-700' :
-                                    'bg-gray-100 text-gray-700'
+                                    campaign.status === 'active' ? 'badge-active' :
+                                    campaign.status === 'success' ? 'badge-success' :
+                                    campaign.status === 'draft' ? 'badge-draft' :
+                                    'badge-default'
                                 ]"
                             >
                                 {{ campaign.status }}
                             </span>
                         </div>
                         <div class="absolute bottom-3 left-3">
-                            <span class="px-3 py-1 bg-white/90 text-xs font-semibold rounded-full text-blue-700">
+                            <span class="px-2.5 py-1 bg-navy-900/80 backdrop-blur-sm text-xs font-medium rounded-sm text-gray-300 border border-navy-700/50">
                                 {{ campaign.category?.name || 'General' }}
                             </span>
                         </div>
@@ -91,31 +105,31 @@
                 </router-link>
                 <div class="p-5">
                     <router-link :to="`/campaigns/${campaign.id}`">
-                        <h3 class="font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors line-clamp-2">
+                        <h3 class="font-semibold text-white mb-2 group-hover:text-brand-400 transition-colors line-clamp-2 text-sm">
                             {{ campaign.title }}
                         </h3>
                     </router-link>
                     <p class="text-sm text-gray-500 mb-2 line-clamp-2">
                         {{ campaign.description }}
                     </p>
-                    <p class="text-xs text-gray-400 mb-4">
+                    <p class="text-xs text-gray-600 mb-4">
                         oleh {{ campaign.creator?.name || 'Anonymous' }}
                     </p>
-                    <div class="space-y-3">
-                        <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div class="space-y-2.5">
+                        <div class="progress-bar h-1.5">
                             <div
-                                class="bg-blue-600 h-2 rounded-full transition-all"
+                                class="progress-fill h-1.5"
                                 :style="{ width: `${getProgress(campaign.collected_amount, campaign.target_amount)}%` }"
                             ></div>
                         </div>
-                        <div class="flex justify-between text-sm">
+                        <div class="flex justify-between text-xs">
                             <div>
-                                <p class="font-semibold text-gray-900">{{ formatCurrency(campaign.collected_amount) }}</p>
-                                <p class="text-gray-500 text-xs">dari {{ formatCurrency(campaign.target_amount) }}</p>
+                                <p class="font-semibold text-gray-200">{{ formatCurrency(campaign.collected_amount) }}</p>
+                                <p class="text-gray-600">dari {{ formatCurrency(campaign.target_amount) }}</p>
                             </div>
                             <div class="text-right">
-                                <p class="font-semibold text-gray-900">{{ getDaysRemaining(campaign.deadline) }} hari</p>
-                                <p class="text-gray-500 text-xs">tersisa</p>
+                                <p class="font-semibold text-gray-200">{{ getDaysRemaining(campaign.deadline) }} hari</p>
+                                <p class="text-gray-600">tersisa</p>
                             </div>
                         </div>
                     </div>
@@ -124,17 +138,17 @@
         </div>
 
         <!-- Pagination -->
-        <div v-if="meta && meta.last_page > 1" class="flex justify-center mt-8">
+        <div v-if="meta && meta.last_page > 1" class="flex justify-center mt-10">
             <div class="flex space-x-2">
                 <button
                     v-for="page in meta.last_page"
                     :key="page"
                     @click="goToPage(page)"
                     :class="[
-                        'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
+                        'px-3.5 py-2 rounded-md text-sm font-medium transition-all duration-200',
                         page === meta.current_page
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'
+                            ? 'bg-brand-500 text-white'
+                            : 'bg-navy-800 text-gray-400 hover:text-white hover:bg-navy-700 border border-navy-700'
                     ]"
                 >
                     {{ page }}

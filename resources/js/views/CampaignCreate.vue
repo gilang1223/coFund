@@ -1,27 +1,27 @@
 <template>
-    <div class="container-page max-w-3xl mx-auto">
+    <div class="container-page max-w-3xl mx-auto animate-fade-in">
         <div class="mb-8">
-            <h1 class="text-2xl md:text-3xl font-bold text-gray-900">Buat Kampanye Baru</h1>
-            <p class="text-gray-600 mt-1">Mulai penggalangan dana untuk idemu</p>
+            <h1 class="text-2xl md:text-3xl font-bold text-white">Buat Kampanye Baru</h1>
+            <p class="text-gray-500 mt-1">Mulai penggalangan dana untuk idemu</p>
         </div>
 
-        <div class="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
+        <div class="card p-8">
             <form @submit.prevent="handleCreate" class="space-y-6">
                 <!-- Title -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Judul Kampanye <span class="text-red-500">*</span></label>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Judul Kampanye <span class="text-brand-500">*</span></label>
                     <InputText
                         v-model="form.title"
                         class="w-full"
                         placeholder="Contoh: Bantu Pembangunan Perpustakaan Desa"
                         :class="{ 'p-invalid': errors.title }"
                     />
-                    <small v-if="errors.title" class="text-red-500">{{ errors.title }}</small>
+                    <small v-if="errors.title" class="text-orange-400">{{ errors.title }}</small>
                 </div>
 
                 <!-- Category -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Kategori <span class="text-red-500">*</span></label>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Kategori <span class="text-brand-500">*</span></label>
                     <Dropdown
                         v-model="form.category_id"
                         :options="categories"
@@ -31,12 +31,12 @@
                         class="w-full"
                         :class="{ 'p-invalid': errors.category_id }"
                     />
-                    <small v-if="errors.category_id" class="text-red-500">{{ errors.category_id }}</small>
+                    <small v-if="errors.category_id" class="text-orange-400">{{ errors.category_id }}</small>
                 </div>
 
                 <!-- Description -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Deskripsi <span class="text-red-500">*</span></label>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Deskripsi <span class="text-brand-500">*</span></label>
                     <Textarea
                         v-model="form.description"
                         class="w-full"
@@ -44,12 +44,12 @@
                         placeholder="Ceritakan tentang kampanye Anda secara detail..."
                         :class="{ 'p-invalid': errors.description }"
                     />
-                    <small v-if="errors.description" class="text-red-500">{{ errors.description }}</small>
+                    <small v-if="errors.description" class="text-orange-400">{{ errors.description }}</small>
                 </div>
 
                 <!-- Target Amount -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Target Donasi <span class="text-red-500">*</span></label>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Target Donasi <span class="text-brand-500">*</span></label>
                     <InputNumber
                         v-model="form.target_amount"
                         class="w-full"
@@ -60,12 +60,12 @@
                         :min="100000"
                         :class="{ 'p-invalid': errors.target_amount }"
                     />
-                    <small v-if="errors.target_amount" class="text-red-500">{{ errors.target_amount }}</small>
+                    <small v-if="errors.target_amount" class="text-orange-400">{{ errors.target_amount }}</small>
                 </div>
 
                 <!-- Deadline -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Batas Waktu <span class="text-red-500">*</span></label>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Batas Waktu <span class="text-brand-500">*</span></label>
                     <Calendar
                         v-model="form.deadline"
                         :minDate="minDate"
@@ -74,12 +74,12 @@
                         placeholder="Min. H+7 dari sekarang"
                         :class="{ 'p-invalid': errors.deadline }"
                     />
-                    <small v-if="errors.deadline" class="text-red-500">{{ errors.deadline }}</small>
+                    <small v-if="errors.deadline" class="text-orange-400">{{ errors.deadline }}</small>
                 </div>
 
                 <!-- Video URL -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">URL Video (Opsional)</label>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">URL Video (Opsional)</label>
                     <InputText
                         v-model="form.video_url"
                         class="w-full"
@@ -90,7 +90,7 @@
                 <!-- Tiers -->
                 <div>
                     <div class="flex items-center justify-between mb-2">
-                        <label class="block text-sm font-medium text-gray-700">Reward Tiers (Opsional)</label>
+                        <label class="block text-sm font-medium text-gray-300">Reward Tiers (Opsional)</label>
                         <Button
                             type="button"
                             icon="pi pi-plus"
@@ -100,9 +100,9 @@
                             @click="addTier"
                         />
                     </div>
-                    <div v-for="(tier, index) in form.tiers" :key="index" class="border border-gray-200 rounded-lg p-4 mb-3">
+                    <div v-for="(tier, index) in form.tiers" :key="index" class="card p-4 mb-3">
                         <div class="flex justify-between items-start mb-3">
-                            <span class="text-sm font-medium text-gray-700">Tier {{ index + 1 }}</span>
+                            <span class="text-sm font-medium text-gray-300">Tier {{ index + 1 }}</span>
                             <Button
                                 type="button"
                                 icon="pi pi-trash"
@@ -133,7 +133,7 @@
                     </div>
                 </div>
 
-                <div v-if="error" class="bg-red-50 text-red-600 p-3 rounded-lg text-sm">
+                <div v-if="error" class="bg-orange-500/10 text-orange-400 p-3 rounded-md text-sm border border-orange-500/20">
                     {{ error }}
                 </div>
 
