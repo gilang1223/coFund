@@ -48,21 +48,21 @@
                         <div class="w-12 h-12 rounded-md bg-brand-500/10 flex items-center justify-center mx-auto mb-3">
                             <i class="pi pi-heart text-brand-500 text-xl"></i>
                         </div>
-                        <div class="text-2xl font-bold text-white mb-0.5">Rp 0</div>
+                        <div class="text-2xl font-bold text-white mb-0.5">{{ formatCurrency(heroStats.total_collected) }}</div>
                         <div class="text-sm text-gray-500">Total Terkumpul</div>
                     </div>
                     <div class="card p-6 text-center hover:border-navy-600 transition-colors">
                         <div class="w-12 h-12 rounded-md bg-green-500/10 flex items-center justify-center mx-auto mb-3">
                             <i class="pi pi-check-circle text-green-400 text-xl"></i>
                         </div>
-                        <div class="text-2xl font-bold text-white mb-0.5">0</div>
+                        <div class="text-2xl font-bold text-white mb-0.5">{{ heroStats.success_count }}</div>
                         <div class="text-sm text-gray-500">Kampanye Sukses</div>
                     </div>
                     <div class="card p-6 text-center hover:border-navy-600 transition-colors">
                         <div class="w-12 h-12 rounded-md bg-brand-500/10 flex items-center justify-center mx-auto mb-3">
                             <i class="pi pi-users text-brand-400 text-xl"></i>
                         </div>
-                        <div class="text-2xl font-bold text-white mb-0.5">0</div>
+                        <div class="text-2xl font-bold text-white mb-0.5">{{ heroStats.total_backers }}</div>
                         <div class="text-sm text-gray-500">Total Pendukung</div>
                     </div>
                 </div>
@@ -200,8 +200,9 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useCampaign } from '@/composables/useCampaign';
+import { campaignApi } from '@/services/api';
 
 const {
     campaigns,
@@ -212,7 +213,26 @@ const {
     getDaysRemaining,
 } = useCampaign();
 
-onMounted(() => {
-    fetchCampaigns({ status: 'active' });
+const heroStats = ref({
+    total_collected: 0,
+    success_count: 0,
+    total_backers: 0,
+});
+
+onMounted(async () => {
+    await fetchCampaigns({ status: 'active' });
+    // Fetch real hero stats
+    try {
+        const res = await campaignApi.getDashboardStats();
+        if (res.data?.data) {
+            heroStats.value = {
+                total_collected: res.data.data.total_collected || 0,
+                success_count: res.data.data.success_campaigns || 0,
+                total_backers: res.data.data.total_backers || 0,
+            };
+        }
+    } catch {
+        // Use defaults
+    }
 });
 </script>

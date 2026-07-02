@@ -56,6 +56,36 @@ const routes = [
                 meta: { title: 'Notifikasi', requiresAuth: true },
             },
             {
+                path: 'admin',
+                component: () => import('@/views/AdminDashboard.vue'),
+                meta: { title: 'Admin Dashboard', requiresAuth: true },
+                children: [
+                    {
+                        path: '',
+                        name: 'admin-dashboard',
+                        component: () => import('@/views/AdminDashboard.vue'),
+                    },
+                ],
+            },
+            {
+                path: 'admin/pending-reviews',
+                name: 'admin-pending-reviews',
+                component: () => import('@/views/AdminDashboard.vue'),
+                meta: { title: 'Pending Reviews', requiresAuth: true },
+            },
+            {
+                path: 'admin/campaigns',
+                name: 'admin-campaigns',
+                component: () => import('@/views/AdminDashboard.vue'),
+                meta: { title: 'All Campaigns', requiresAuth: true },
+            },
+            {
+                path: 'admin/users',
+                name: 'admin-users',
+                component: () => import('@/views/AdminDashboard.vue'),
+                meta: { title: 'Manage Users', requiresAuth: true },
+            },
+            {
                 path: 'login',
                 name: 'login',
                 component: () => import('@/views/Login.vue'),
