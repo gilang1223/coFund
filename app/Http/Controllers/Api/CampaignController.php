@@ -143,6 +143,38 @@ class CampaignController extends ApiController
     }
 
     /**
+     * Get campaigns for the authenticated user.
+     */
+    public function myCampaigns()
+    {
+        $filters = request()->only(['status']);
+        $filters['user_id'] = auth()->id();
+        $campaigns = $this->campaignService->getAll($filters);
+
+        return $this->sendPaginatedResponse(
+            'My campaigns retrieved successfully',
+            $campaigns->items(),
+            [
+                'current_page' => $campaigns->currentPage(),
+                'last_page' => $campaigns->lastPage(),
+                'per_page' => $campaigns->perPage(),
+                'total' => $campaigns->total(),
+            ]
+        );
+    }
+
+    /**
+     * Get dashboard stats for the authenticated user.
+     */
+    public function dashboardStats()
+    {
+        $user = auth()->user();
+        $stats = $this->campaignService->getUserStats($user);
+
+        return $this->sendResponse('Dashboard stats retrieved successfully', $stats);
+    }
+
+    /**
      * Remove the specified campaign.
      */
     public function destroy(int $id)

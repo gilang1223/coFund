@@ -39,7 +39,7 @@
                             </router-link>
                             <router-link
                                 to="/dashboard"
-                                class="px-3 py-2 rounded-md text-sm font-medium text-gray-400 hover:text-white hover:bg-navy-700/50 transition-all duration-200"
+                                class="hidden md:inline-flex px-3 py-2 rounded-md text-sm font-medium text-gray-400 hover:text-white hover:bg-navy-700/50 transition-all duration-200"
                             >
                                 <i class="pi pi-user mr-1.5"></i>
                                 {{ appStore.user?.name }}

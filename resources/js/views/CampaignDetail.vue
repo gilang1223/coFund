@@ -119,7 +119,7 @@
                             <div
                                 v-for="tier in campaign.tiers"
                                 :key="tier.id"
-                                @click="selectedTier = tier"
+                                @click="selectTier(tier)"
                                 :class="[
                                     'p-4 rounded-md border cursor-pointer transition-all duration-200',
                                     selectedTier?.id === tier.id
@@ -217,6 +217,14 @@ const showBackingDialog = ref(false);
 const selectedTier = ref(null);
 const backingAmount = ref(10000);
 const isProcessing = ref(false);
+
+function selectTier(tier) {
+    selectedTier.value = tier;
+    // Auto-set amount to tier minimum
+    if (tier.min_amount > backingAmount.value) {
+        backingAmount.value = tier.min_amount;
+    }
+}
 
 async function fetchCampaign() {
     isLoading.value = true;

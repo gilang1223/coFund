@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Campaign;
 use App\Models\CampaignImage;
+use App\Models\Backing;
 use App\Models\CampaignTier;
 use App\Models\CampaignUpdate;
 use Illuminate\Support\Str;
@@ -16,6 +17,10 @@ class CampaignService extends BaseService
     public function getAll(array $filters = [], int $perPage = 12)
     {
         $query = Campaign::with(['category', 'creator', 'primaryImage']);
+
+        if (!empty($filters['user_id'])) {
+            $query->where('user_id', $filters['user_id']);
+        }
 
         if (!empty($filters['status'])) {
             $query->where('status', $filters['status']);
@@ -193,6 +198,31 @@ class CampaignService extends BaseService
         }
 
         return $campaign->delete();
+    }
+
+    /**
+     * Get dashboard stats for a user.
+     */
+    public function getUserStats($user): array
+    {
+        return [
+            'user' => [
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role,
+                'balance' => $user->balance,
+            ],
+            'campaigns_count' => Campaign::where('user_id', $user->id)->count(),
+            'backings_count' => Backing::where('user_id', $user->id)->count(),
+            'total_backed' => Backing::where('user_id', $user->id)
+                ->where('status', 'completed')
+                ->sum('amount'),
+            'active_campaigns' => Campaign::where('user_id', $user->id)
+                ->where('status', 'active')
+                ->count(),
+            'total_collected' => Campaign::where('user_id', $user->id)
+                ->sum('collected_amount'),
+        ];
     }
 
     /**

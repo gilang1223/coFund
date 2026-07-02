@@ -26,6 +26,12 @@ export const campaignApi = {
     reject(id) {
         return apiClient.post(`/campaigns/${id}/reject`);
     },
+    getMyCampaigns(params = {}) {
+        return apiClient.get('/my-campaigns', { params });
+    },
+    getDashboardStats() {
+        return apiClient.get('/dashboard-stats');
+    },
 };
 
 // Category API

@@ -32,6 +32,18 @@ const routes = [
                 meta: { title: 'Buat Campaign', requiresAuth: true },
             },
             {
+                path: 'my-campaigns',
+                name: 'my-campaigns',
+                component: () => import('@/views/MyCampaigns.vue'),
+                meta: { title: 'Kampanye Saya', requiresAuth: true },
+            },
+            {
+                path: 'my-backings',
+                name: 'my-backings',
+                component: () => import('@/views/MyBackings.vue'),
+                meta: { title: 'Donasi Saya', requiresAuth: true },
+            },
+            {
                 path: 'login',
                 name: 'login',
                 component: () => import('@/views/Login.vue'),
