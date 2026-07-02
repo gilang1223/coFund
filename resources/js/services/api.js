@@ -1,0 +1,83 @@
+import apiClient from '@/api/axios';
+
+// Campaign API
+export const campaignApi = {
+    getAll(params = {}) {
+        return apiClient.get('/campaigns', { params });
+    },
+    getById(id) {
+        return apiClient.get(`/campaigns/${id}`);
+    },
+    create(data) {
+        return apiClient.post('/campaigns', data);
+    },
+    update(id, data) {
+        return apiClient.put(`/campaigns/${id}`, data);
+    },
+    delete(id) {
+        return apiClient.delete(`/campaigns/${id}`);
+    },
+    submitForReview(id) {
+        return apiClient.post(`/campaigns/${id}/submit-review`);
+    },
+    approve(id) {
+        return apiClient.post(`/campaigns/${id}/approve`);
+    },
+    reject(id) {
+        return apiClient.post(`/campaigns/${id}/reject`);
+    },
+};
+
+// Category API
+export const categoryApi = {
+    getAll() {
+        return apiClient.get('/categories');
+    },
+    getById(id) {
+        return apiClient.get(`/categories/${id}`);
+    },
+    create(data) {
+        return apiClient.post('/categories', data);
+    },
+    update(id, data) {
+        return apiClient.put(`/categories/${id}`, data);
+    },
+    delete(id) {
+        return apiClient.delete(`/categories/${id}`);
+    },
+};
+
+// Backing API
+export const backingApi = {
+    create(data) {
+        return apiClient.post('/backings', data);
+    },
+    complete(id) {
+        return apiClient.post(`/backings/${id}/complete`);
+    },
+    refund(id) {
+        return apiClient.post(`/backings/${id}/refund`);
+    },
+    getMyBackings() {
+        return apiClient.get('/my-backings');
+    },
+    getCampaignBackings(campaignId) {
+        return apiClient.get(`/campaigns/${campaignId}/backings`);
+    },
+};
+
+// Auth API
+export const authApi = {
+    login(email, password) {
+        return apiClient.post('/login', { email, password });
+    },
+    register(data) {
+        return apiClient.post('/register', data);
+    },
+    logout() {
+        return apiClient.post('/logout');
+    },
+    getUser() {
+        return apiClient.get('/user');
+    },
+};
