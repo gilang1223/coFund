@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
+// SPA catch-all: serve the Vue app for all routes except API
+Route::get('/{any}', function () {
     return view('welcome');
-});
+})->where('any', '.*');
