@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\CampaignController;
 use App\Http\Controllers\Api\BackingController;
+use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\TransactionController;
 
 /*
@@ -55,6 +56,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('backings/{id}/refund', [BackingController::class, 'refund']);
     Route::get('my-backings', [BackingController::class, 'myBackings']);
     Route::get('campaigns/{campaignId}/backings', [BackingController::class, 'campaignBackings']);
+
+    // Notifications
+    Route::get('notifications', [NotificationController::class, 'index']);
+    Route::get('notifications/unread-count', [NotificationController::class, 'unreadCount']);
+    Route::post('notifications/{id}/read', [NotificationController::class, 'markAsRead']);
+    Route::post('notifications/mark-all-read', [NotificationController::class, 'markAllAsRead']);
+    Route::delete('notifications/{id}', [NotificationController::class, 'destroy']);
 
     // Transactions & Escrow
     Route::get('transactions', [TransactionController::class, 'index']);

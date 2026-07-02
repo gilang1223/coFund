@@ -37,6 +37,20 @@
                                 <i class="pi pi-plus mr-2 text-xs"></i>
                                 Start Campaign
                             </router-link>
+                            <!-- Notification Bell -->
+                            <router-link
+                                to="/notifications"
+                                class="relative p-2 rounded-md text-gray-500 hover:text-gray-300 hover:bg-navy-700/50 transition-all duration-200"
+                                v-tooltip.bottom="'Notifikasi'"
+                            >
+                                <i class="pi pi-bell text-lg"></i>
+                                <span
+                                    v-if="unreadCount > 0"
+                                    class="absolute -top-0.5 -right-0.5 w-4.5 h-4.5 rounded-full bg-brand-500 text-white text-[10px] font-bold flex items-center justify-center"
+                                >
+                                    {{ unreadCount > 9 ? '9+' : unreadCount }}
+                                </span>
+                            </router-link>
                             <router-link
                                 to="/dashboard"
                                 class="hidden md:inline-flex px-3 py-2 rounded-md text-sm font-medium text-gray-400 hover:text-white hover:bg-navy-700/50 transition-all duration-200"
@@ -182,15 +196,41 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAppStore } from '@/stores/app';
 import { useAuth } from '@/composables/useAuth';
+import { notificationApi } from '@/services/api';
 
 const router = useRouter();
 const appStore = useAppStore();
 const { logout } = useAuth();
 const isMobileMenuOpen = ref(false);
+const unreadCount = ref(0);
+let pollInterval = null;
+
+async function fetchUnreadCount() {
+    if (!appStore.isAuthenticated) {
+        unreadCount.value = 0;
+        return;
+    }
+    try {
+        const res = await notificationApi.getUnreadCount();
+        unreadCount.value = res.data.data.unread_count;
+    } catch {
+        unreadCount.value = 0;
+    }
+}
+
+onMounted(() => {
+    fetchUnreadCount();
+    // Poll every 30 seconds
+    pollInterval = setInterval(fetchUnreadCount, 30000);
+});
+
+onUnmounted(() => {
+    if (pollInterval) clearInterval(pollInterval);
+});
 
 async function handleLogout() {
     await logout();

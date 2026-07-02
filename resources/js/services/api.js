@@ -97,6 +97,25 @@ export const transactionApi = {
     },
 };
 
+// Notification API
+export const notificationApi = {
+    getAll(params = {}) {
+        return apiClient.get('/notifications', { params });
+    },
+    getUnreadCount() {
+        return apiClient.get('/notifications/unread-count');
+    },
+    markAsRead(id) {
+        return apiClient.post(`/notifications/${id}/read`);
+    },
+    markAllAsRead() {
+        return apiClient.post('/notifications/mark-all-read');
+    },
+    delete(id) {
+        return apiClient.delete(`/notifications/${id}`);
+    },
+};
+
 // Auth API
 export const authApi = {
     login(email, password) {

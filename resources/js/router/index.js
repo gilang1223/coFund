@@ -50,6 +50,12 @@ const routes = [
                 meta: { title: 'Transaksi', requiresAuth: true },
             },
             {
+                path: 'notifications',
+                name: 'notifications',
+                component: () => import('@/views/Notifications.vue'),
+                meta: { title: 'Notifikasi', requiresAuth: true },
+            },
+            {
                 path: 'login',
                 name: 'login',
                 component: () => import('@/views/Login.vue'),
