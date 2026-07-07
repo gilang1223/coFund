@@ -86,7 +86,7 @@
 
                         <!-- Password Strength Bar -->
                         <Transition name="slide-down">
-                            <div v-if="password.length > 0" class="mt-2">
+                            <div v-if="password?.length > 0" class="mt-2">
                                 <div class="flex gap-1 mb-1">
                                     <div
                                         v-for="i in 4"

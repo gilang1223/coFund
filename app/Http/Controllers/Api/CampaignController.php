@@ -22,6 +22,13 @@ class CampaignController extends ApiController
         $filters = request()->only(['status', 'category_id', 'search']);
         $campaigns = $this->campaignService->getAll($filters);
 
+        // Hide sensitive creator data from public listing
+        $campaigns->getCollection()->each(function ($campaign) {
+            if ($campaign->relationLoaded('creator')) {
+                $campaign->creator->makeHidden(['email', 'balance', 'is_suspended']);
+            }
+        });
+
         return $this->sendPaginatedResponse(
             'Campaigns retrieved successfully',
             $campaigns->items(),
@@ -43,6 +50,23 @@ class CampaignController extends ApiController
 
         if (!$campaign) {
             return $this->sendNotFound('Campaign not found');
+        }
+
+        $user = auth()->user();
+
+        // Restrict: only active campaigns are publicly viewable.
+        // Creator can see their own campaigns in any status.
+        // Admin can see all campaigns.
+        $isOwner = $user && $user->id === $campaign->user_id;
+        $isAdmin = $user && $user->isAdmin();
+
+        if ($campaign->status !== 'active' && !$isOwner && !$isAdmin) {
+            return $this->sendNotFound('Campaign not found');
+        }
+
+        // Hide sensitive creator data from users who are neither owner nor admin
+        if (!$isOwner && !$isAdmin && $campaign->relationLoaded('creator')) {
+            $campaign->creator->makeHidden(['email', 'balance', 'is_suspended']);
         }
 
         // Append backings count

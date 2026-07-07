@@ -166,6 +166,12 @@ const routes = [
                 component: () => import('@/views/AdminDashboard.vue'),
                 meta: { title: 'Support Conversations' },
             },
+            {
+                path: 'profile',
+                name: 'admin-profile',
+                component: () => import('@/views/admin/AdminProfile.vue'),
+                meta: { title: 'Profil Admin' },
+            },
         ],
     },
 ];
@@ -179,9 +185,8 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
     document.title = to.meta.title ? `${to.meta.title} | CoFund` : 'CoFund';
 
-    const isAdminPath = to.path.startsWith('/admin');
-    const token = localStorage.getItem(isAdminPath ? 'admin_auth_token' : 'auth_token');
-    const userRaw = localStorage.getItem(isAdminPath ? 'admin_auth_user' : 'auth_user');
+    const token = localStorage.getItem('auth_token');
+    const userRaw = localStorage.getItem('auth_user');
     const user = userRaw ? JSON.parse(userRaw) : null;
     const role = user?.role ?? null;
 
@@ -193,7 +198,7 @@ router.beforeEach((to, from, next) => {
 
     // Butuh login
     if (to.meta.requiresAuth && !token) {
-        if (isAdminPath) {
+        if (to.path.startsWith('/admin')) {
             next({ name: 'admin-login', query: { redirect: to.fullPath } });
         } else {
             next({ name: 'login', query: { redirect: to.fullPath } });

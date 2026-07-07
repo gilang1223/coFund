@@ -16,14 +16,10 @@ export const useAppStore = defineStore('app', () => {
     const hasVerifiedEmail = computed(() => !!user.value?.email_verified_at);
     const isSuspended = computed(() => !!user.value?.is_suspended);
 
-    const isAdminPage = () => window.location.pathname.startsWith('/admin');
-    const tokenKey = () => isAdminPage() ? 'admin_auth_token' : 'auth_token';
-    const userKey = () => isAdminPage() ? 'admin_auth_user' : 'auth_user';
-
     // Actions
     async function fetchUser() {
         try {
-            const token = localStorage.getItem(tokenKey());
+            const token = localStorage.getItem('auth_token');
             if (!token) {
                 isAuthenticated.value = false;
                 user.value = null;
@@ -31,13 +27,13 @@ export const useAppStore = defineStore('app', () => {
             }
             const response = await authApi.getUser();
             user.value = response.data.data;
-            localStorage.setItem(userKey(), JSON.stringify(user.value));
+            localStorage.setItem('auth_user', JSON.stringify(user.value));
             isAuthenticated.value = true;
         } catch (error) {
             user.value = null;
             isAuthenticated.value = false;
-            localStorage.removeItem(tokenKey());
-            localStorage.removeItem(userKey());
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('auth_user');
         }
     }
 
@@ -49,8 +45,8 @@ export const useAppStore = defineStore('app', () => {
     function clearUser() {
         user.value = null;
         isAuthenticated.value = false;
-        localStorage.removeItem(tokenKey());
-        localStorage.removeItem(userKey());
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('auth_user');
     }
 
     function showNotification(message, type = 'success') {

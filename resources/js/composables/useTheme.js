@@ -14,13 +14,12 @@ if (saved === 'light') {
     isDarkMode.value = true;
 }
 
-// Apply initial theme
+// Apply initial theme — only toggle 'light-mode' class, no separate 'dark-mode' class needed.
+// When light-mode is absent, the default dark theme (from Tailwind/PrimeVue) applies.
 function applyTheme(dark) {
     if (dark) {
         document.documentElement.classList.remove('light-mode');
-        document.documentElement.classList.add('dark-mode');
     } else {
-        document.documentElement.classList.remove('dark-mode');
         document.documentElement.classList.add('light-mode');
     }
 }

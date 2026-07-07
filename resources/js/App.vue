@@ -15,6 +15,10 @@ function handleUnauthorized() {
 }
 
 onMounted(() => {
+    // Clean up old dual-token keys (from previous admin_auth_token system)
+    localStorage.removeItem('admin_auth_token');
+    localStorage.removeItem('admin_auth_user');
+
     appStore.fetchUser();
     window.addEventListener('auth:unauthorized', handleUnauthorized);
 });

@@ -19,21 +19,6 @@
 
                     <!-- Right section -->
                     <div class="flex items-center space-x-2 shrink-0">
-                        <!-- Notification Bell -->
-                        <router-link
-                            to="/notifications"
-                            class="relative p-2 rounded-md text-gray-500 hover:text-gray-300 hover:bg-navy-700/50 transition-all duration-200"
-                            v-tooltip.bottom="'Notifikasi'"
-                        >
-                            <i class="pi pi-bell text-lg"></i>
-                            <span
-                                v-if="unreadCount > 0"
-                                class="absolute -top-0.5 -right-0.5 w-4.5 h-4.5 rounded-full bg-orange-500 text-white text-[10px] font-bold flex items-center justify-center"
-                            >
-                                {{ unreadCount > 9 ? '9+' : unreadCount }}
-                            </span>
-                        </router-link>
-
                         <!-- Theme Toggle -->
                         <button
                             @click="toggleTheme"
@@ -44,9 +29,9 @@
                         </button>
                         <!-- Profile -->
                         <router-link
-                            to="/profile"
+                            to="/admin/profile"
                             class="hidden md:inline-flex px-3 py-2 rounded-md text-sm font-medium text-gray-400 hover:text-white hover:bg-navy-700/50 transition-all duration-200"
-                            v-tooltip.bottom="'Profil Saya'"
+                            v-tooltip.bottom="'Profil Admin'"
                         >
                             <i class="pi pi-user mr-1.5"></i>
                             {{ appStore.user?.name }}
@@ -96,7 +81,7 @@
                         </router-link>
                         <hr class="border-navy-700/50 my-2">
                         <router-link
-                            to="/profile"
+                            to="/admin/profile"
                             class="block px-3 py-2.5 rounded-md text-sm font-medium text-gray-400 hover:text-white hover:bg-navy-700/50 transition-all"
                             @click="isMobileMenuOpen = false"
                         >
@@ -116,8 +101,16 @@
         </nav>
 
         <!-- Main Content -->
-        <main class="flex-1">
-            <router-view />
+        <main class="flex-1 relative">
+            <!-- Background texture overlay -->
+            <div class="fixed inset-0 pointer-events-none z-0" aria-hidden="true">
+                <div class="absolute inset-0 bg-glow-top"></div>
+                <div class="absolute inset-0 bg-pattern-dots"></div>
+            </div>
+            <!-- Content above background -->
+            <div class="relative z-10">
+                <router-view />
+            </div>
         </main>
     </div>
 </template>
@@ -137,6 +130,15 @@ const { logout } = useAuth();
 const isMobileMenuOpen = ref(false);
 const unreadCount = ref(0);
 let pollInterval = null;
+
+const navItems = ref([
+    { to: '/admin', label: 'Overview', icon: 'pi pi-chart-bar', badge: 0 },
+    { to: '/admin/pending-reviews', label: 'Pending Reviews', icon: 'pi pi-check-circle', badge: 0, badgeClass: 'bg-orange-500/20 text-orange-400' },
+    { to: '/admin/campaigns', label: 'All Campaigns', icon: 'pi pi-verified', badge: 0 },
+    { to: '/admin/users', label: 'Users', icon: 'pi pi-users', badge: 0 },
+    { to: '/admin/creator-requests', label: 'Creator Requests', icon: 'pi pi-star', badge: 0, badgeClass: 'bg-purple-500/20 text-purple-400' },
+    { to: '/admin/support', label: 'Support', icon: 'pi pi-comments', badge: 0 },
+]);
 
 function isActive(to) {
     if (to === '/admin') {
