@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\VerificationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -13,7 +14,12 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-// SPA catch-all: serve the Vue app for all routes except API
+// Email Verification — signed URL route (must be before the SPA catch-all)
+Route::get('/email/verify/{id}/{hash}', [VerificationController::class, 'verify'])
+    ->middleware(['signed'])
+    ->name('verification.verify');
+
+// SPA catch-all: serve the Vue app for all other routes
 Route::get('/{any}', function () {
     return view('welcome');
 })->where('any', '.*');

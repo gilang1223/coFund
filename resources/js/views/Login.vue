@@ -19,6 +19,7 @@
             <Transition name="shake">
                 <div :key="errorCount" class="card p-8" :class="{ 'animate-shake': errorCount > 0 }">
                     <form @submit.prevent="handleLogin" class="space-y-4">
+                        <!-- Email -->
                         <div class="transition-all duration-200" :class="{ 'opacity-80': isLoading }">
                             <label class="block text-sm font-medium text-gray-300 mb-1">Email</label>
                             <div class="relative">
@@ -39,8 +40,14 @@
                             </Transition>
                         </div>
 
+                        <!-- Password -->
                         <div class="transition-all duration-200" :class="{ 'opacity-80': isLoading }">
-                            <label class="block text-sm font-medium text-gray-300 mb-1">Password</label>
+                            <div class="flex items-center justify-between mb-1">
+                                <label class="block text-sm font-medium text-gray-300">Password</label>
+                                <router-link to="/forgot-password" class="text-xs text-brand-400 hover:text-brand-300 transition-colors">
+                                    Lupa Password?
+                                </router-link>
+                            </div>
                             <div class="relative">
                                 <i class="pi pi-lock absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm"></i>
                                 <input
@@ -67,6 +74,14 @@
                                 </small>
                             </Transition>
                         </div>
+
+                        <!-- Verification Alert (from email verification redirect) -->
+                        <Transition name="slide-down">
+                            <div v-if="verificationSuccess" class="bg-green-500/10 text-green-400 p-3 rounded-md text-sm border border-green-500/20 flex items-start gap-2">
+                                <i class="pi pi-check-circle mt-0.5 shrink-0"></i>
+                                <span>Email berhasil diverifikasi! Silakan login.</span>
+                            </div>
+                        </Transition>
 
                         <!-- Error Alert -->
                         <Transition name="slide-down">
@@ -107,35 +122,58 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuth } from '@/composables/useAuth';
+import { useAppStore } from '@/stores/app';
+import { useForm, useField } from 'vee-validate';
+import * as yup from 'yup';
 
 const router = useRouter();
 const route = useRoute();
+const appStore = useAppStore();
 const { login, isLoading, error } = useAuth();
 
-const email = ref('');
-const password = ref('');
-const errors = ref({});
+const schema = yup.object({
+    email: yup.string().required('Email wajib diisi').email('Format email tidak valid'),
+    password: yup.string().required('Password wajib diisi').min(8, 'Password minimal 8 karakter'),
+});
+
+const { handleSubmit, errors } = useForm({
+    validationSchema: schema,
+});
+
+const { value: email } = useField('email');
+const { value: password } = useField('password');
+
 const showPassword = ref(false);
 const errorCount = ref(0);
+const verificationSuccess = ref(false);
 
-async function handleLogin() {
-    errors.value = {};
-    let hasError = false;
-    if (!email.value) { errors.value.email = 'Email wajib diisi'; hasError = true; }
-    if (!password.value) { errors.value.password = 'Password wajib diisi'; hasError = true; }
-    if (hasError) return;
+onMounted(() => {
+    // Check for email verification success from redirect
+    if (route.query.verified === 'success') {
+        verificationSuccess.value = true;
+    }
+});
 
+const handleLogin = handleSubmit(async (values) => {
     try {
-        await login(email.value, password.value);
-        const redirect = route.query.redirect || '/dashboard';
-        router.push(redirect);
+        await login(values.email, values.password);
+        if (appStore.user?.role === 'admin') {
+            router.push('/admin');
+        } else if (appStore.user?.role === 'backer') {
+            const redirect = route.query.redirect || '/campaigns';
+            router.push(redirect);
+        } else {
+            // Creator dan role lainnya → dashboard
+            const redirect = route.query.redirect || '/dashboard';
+            router.push(redirect);
+        }
     } catch {
         errorCount.value++;
     }
-}
+});
 </script>
 
 <style scoped>

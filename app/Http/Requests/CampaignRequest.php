@@ -27,7 +27,7 @@ class CampaignRequest extends FormRequest
             'description' => ($isStore ? 'required' : 'sometimes') . '|string',
             'target_amount' => ($isStore ? 'required' : 'sometimes') . '|numeric|min:100000',
             'deadline' => ($isStore ? 'required' : 'sometimes') . '|date|after:' . now()->addDays(7)->format('Y-m-d'),
-            'video_url' => 'nullable|url',
+            'video_url' => ($isStore ? 'required' : 'sometimes') . '|url',
         ];
 
         if ($isStore) {
@@ -56,6 +56,8 @@ class CampaignRequest extends FormRequest
             'target_amount.min' => 'Minimal target donasi adalah Rp100.000.',
             'deadline.required' => 'Batas waktu kampanye wajib diisi.',
             'deadline.after' => 'Minimal batas waktu adalah H+7 dari sekarang.',
+            'video_url.required' => 'URL video YouTube wajib diisi.',
+            'video_url.url' => 'Format URL video tidak valid.',
             'tiers.*.name.required_with' => 'Nama tier wajib diisi.',
             'tiers.*.min_amount.required_with' => 'Jumlah minimal tier wajib diisi.',
             'tiers.*.min_amount.min' => 'Minimal donasi tier adalah Rp10.000.',

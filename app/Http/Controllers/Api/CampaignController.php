@@ -45,6 +45,9 @@ class CampaignController extends ApiController
             return $this->sendNotFound('Campaign not found');
         }
 
+        // Append backings count
+        $campaign->backings_count = $campaign->backings()->count();
+
         return $this->sendResponse('Campaign retrieved successfully', $campaign);
     }
 
@@ -53,6 +56,14 @@ class CampaignController extends ApiController
      */
     public function store(CampaignRequest $request)
     {
+        if (auth()->user()?->isAdmin()) {
+            return $this->sendForbidden('Admin tidak diizinkan membuat campaign.');
+        }
+
+        if (!auth()->user()?->isCreator()) {
+            return $this->sendForbidden('Hanya creator yang dapat membuat campaign. Ajukan request creator terlebih dahulu.');
+        }
+
         $data = $request->validated();
         $data['user_id'] = auth()->id();
 
@@ -62,7 +73,7 @@ class CampaignController extends ApiController
     }
 
     /**
-     * Update the specified campaign.
+     * Update the specified campaign (only if status is 'draft' or 'rejected' → 'draft').
      */
     public function update(CampaignRequest $request, int $id)
     {
@@ -75,6 +86,11 @@ class CampaignController extends ApiController
         // Only creator or admin can update
         if ($campaign->user_id !== auth()->id() && !auth()->user()?->isAdmin()) {
             return $this->sendForbidden('You are not authorized to update this campaign');
+        }
+
+        // Only draft campaigns can be updated (termasuk rejected → draft)
+        if ($campaign->status !== 'draft') {
+            return $this->sendError('Hanya kampanye dengan status draft yang dapat diedit. Kirim kampanye ke review setelah selesai mengedit.', 400);
         }
 
         $campaign = $this->campaignService->update($id, $request->validated());
@@ -126,6 +142,7 @@ class CampaignController extends ApiController
 
     /**
      * Reject campaign (admin only).
+     * Wajib menyertakan catatan alasan penolakan.
      */
     public function reject(int $id)
     {
@@ -133,10 +150,14 @@ class CampaignController extends ApiController
             return $this->sendForbidden('Only admin can reject campaigns');
         }
 
-        $campaign = $this->campaignService->reject($id);
+        request()->validate([
+            'rejection_note' => 'required|string|min:10|max:1000',
+        ]);
+
+        $campaign = $this->campaignService->reject($id, request()->input('rejection_note'));
 
         if (!$campaign) {
-            return $this->sendError('Campaign cannot be rejected', 400);
+            return $this->sendError('Campaign cannot be rejected. Only campaigns in review status can be rejected.', 400);
         }
 
         return $this->sendResponse('Campaign rejected successfully', $campaign);
@@ -175,7 +196,7 @@ class CampaignController extends ApiController
     }
 
     /**
-     * Remove the specified campaign.
+     * Remove the specified campaign (only if status is 'draft').
      */
     public function destroy(int $id)
     {
@@ -190,8 +211,63 @@ class CampaignController extends ApiController
             return $this->sendForbidden('You are not authorized to delete this campaign');
         }
 
-        $this->campaignService->delete($id);
+        // Rule 9: Only draft campaigns can be deleted
+        if ($campaign->status !== 'draft') {
+            return $this->sendError('Hanya kampanye dengan status draft yang dapat dihapus.', 400);
+        }
 
-        return $this->sendResponse('Campaign deleted successfully');
-    }
-}
+        $this->campaignService->delete($id);
+ 
+         return $this->sendResponse('Campaign deleted successfully');
+     }
+ 
+     /**
+      * Add a progress update to the campaign.
+      */
+     public function addUpdate(int $id)
+     {
+         $campaign = $this->campaignService->getById($id);
+ 
+         if (!$campaign) {
+             return $this->sendNotFound('Campaign not found');
+         }
+ 
+         if ($campaign->user_id !== auth()->id()) {
+             return $this->sendForbidden('Anda hanya dapat memposting update untuk kampanye milik Anda sendiri.');
+         }
+ 
+         if ($campaign->status !== 'active') {
+             return $this->sendError('Hanya kampanye dengan status aktif yang dapat ditambahkan update.', 400);
+         }
+ 
+         request()->validate([
+             'title' => 'required|string|max:100',
+             'content' => 'required|string|max:5000',
+         ]);
+ 
+         $update = $this->campaignService->addUpdate($id, request()->only(['title', 'content']));
+ 
+         if (!$update) {
+             return $this->sendError('Gagal menambahkan update kampanye.', 500);
+         }
+ 
+         // Notify all backers (in-app only)
+         $backers = \App\Models\Backing::where('campaign_id', $id)
+             ->where('status', 'completed')
+             ->pluck('user_id')
+             ->unique();
+ 
+         foreach ($backers as $backerId) {
+             \App\Jobs\SendNotificationJob::dispatch(
+                 $backerId,
+                 'campaign_update',
+                 "Update Baru: {$campaign->title} 📢",
+                 "Creator baru saja memposting update: \"{$update->title}\". Silakan cek detail kampanye.",
+                 ['campaign_id' => $campaign->id, 'update_id' => $update->id],
+                 false, // send email
+             );
+         }
+ 
+         return $this->sendCreated('Campaign update posted successfully', $update);
+     }
+ }

@@ -57,6 +57,20 @@
             color: #E4E4E4;
             margin: 0 0 20px;
         }
+        .btn {
+            display: inline-block;
+            padding: 14px 32px;
+            background: #FF6363;
+            color: #FFFFFF;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            margin: 10px 0 20px;
+        }
+        .btn:hover {
+            background: #e55555;
+        }
         .footer {
             text-align: center;
             padding: 25px 0;
@@ -82,6 +96,11 @@
             @if(isset($data['amount']))
                 <p style="font-size: 18px; font-weight: 700; color: #FF6363;">
                     Rp {{ number_format($data['amount'], 0, ',', '.') }}
+                </p>
+            @endif
+            @if(isset($data['action_label']) && isset($data['action_url']))
+                <p style="text-align: center;">
+                    <a href="{{ $data['action_url'] }}" class="btn">{{ $data['action_label'] }}</a>
                 </p>
             @endif
         </div>

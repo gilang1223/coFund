@@ -30,9 +30,23 @@
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <!-- Main Content -->
                 <div class="lg:col-span-2 space-y-6">
-                    <!-- Image -->
-                    <div class="h-64 md:h-96 bg-gradient-to-br from-brand-500/20 to-navy-800 rounded-lg flex items-center justify-center text-navy-600">
-                        <i class="pi pi-image text-8xl"></i>
+                    <!-- Video / Image -->
+                    <div class="rounded-lg overflow-hidden bg-navy-900">
+                        <!-- YouTube Embed -->
+                        <div v-if="campaign.video_url && getYouTubeId(campaign.video_url)" class="relative w-full" style="padding-top: 56.25%;">
+                            <iframe
+                                :src="`https://www.youtube.com/embed/${getYouTubeId(campaign.video_url)}?rel=0&showinfo=0`"
+                                class="absolute inset-0 w-full h-full"
+                                frameborder="0"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowfullscreen
+                            ></iframe>
+                        </div>
+                        <!-- Static Image fallback -->
+                        <div v-else class="h-64 md:h-96 bg-gradient-to-br from-brand-500/20 to-navy-800 flex items-center justify-center text-navy-600">
+                            <img v-if="campaign.images?.length" :src="campaign.images[0].url" :alt="campaign.title" class="w-full h-full object-cover" @error="$event.target.style.display='none'" />
+                            <i v-else class="pi pi-image text-8xl"></i>
+                        </div>
                     </div>
 
                     <!-- Title & Meta -->
@@ -75,6 +89,35 @@
                             <p class="text-xs text-gray-600 mt-2">{{ formatDate(update.created_at) }}</p>
                         </div>
                     </div>
+
+                    <!-- Funding Chart (hanya untuk creator campaign ini) -->
+                    <div v-if="isCreator && campaign.status !== 'draft' && campaign.status !== 'rejected'" class="card p-6">
+                        <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                            <i class="pi pi-chart-bar text-brand-400 text-sm"></i>
+                            Grafik Pendanaan
+                        </h2>
+                        <div class="relative">
+                            <canvas ref="chartCanvas" class="w-full h-48"></canvas>
+                        </div>
+                        <div class="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+                            <div class="p-3 rounded-md bg-navy-800/50">
+                                <p class="text-xs text-gray-500">Target</p>
+                                <p class="text-sm font-semibold text-white">{{ formatCurrency(campaign.target_amount) }}</p>
+                            </div>
+                            <div class="p-3 rounded-md bg-navy-800/50">
+                                <p class="text-xs text-gray-500">Terkumpul</p>
+                                <p class="text-sm font-semibold text-green-400">{{ formatCurrency(campaign.collected_amount) }}</p>
+                            </div>
+                            <div class="p-3 rounded-md bg-navy-800/50">
+                                <p class="text-xs text-gray-500">Progress</p>
+                                <p class="text-sm font-semibold text-brand-400">{{ getProgress(campaign.collected_amount, campaign.target_amount) }}%</p>
+                            </div>
+                            <div class="p-3 rounded-md bg-navy-800/50">
+                                <p class="text-xs text-gray-500">Donatur</p>
+                                <p class="text-sm font-semibold text-white">{{ backingsCount }}</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Sidebar -->
@@ -105,13 +148,21 @@
                         </div>
 
                         <button
-                            v-if="campaign.status === 'active'"
+                            v-if="campaign.status === 'active' && !appStore.isAdmin && !appStore.isSuspended"
                             @click="showBackingDialog = true"
                             class="w-full py-3 bg-brand-500 text-white font-semibold rounded-md hover:bg-brand-600 transition-all duration-200"
                         >
                             <i class="pi pi-heart mr-2"></i>
                             Dukung Kampanye Ini
                         </button>
+                        <!-- Suspended info -->
+                        <div
+                            v-else-if="appStore.isSuspended"
+                            class="w-full py-3 bg-red-500/10 text-red-400 text-sm font-medium rounded-md text-center border border-red-500/20"
+                        >
+                            <i class="pi pi-ban mr-2"></i>
+                            Akun disuspend
+                        </div>
 
                         <!-- Tiers -->
                         <div v-if="campaign.tiers?.length" class="mt-6 space-y-3">
@@ -154,6 +205,7 @@
 
         <!-- Backing Dialog -->
         <Dialog
+            v-if="!appStore.isAdmin"
             v-model:visible="showBackingDialog"
             header="Dukung Kampanye"
             :modal="true"
@@ -184,20 +236,21 @@
                     <p class="text-xs text-brand-500/70 mt-1">Min. {{ formatCurrency(selectedTier.min_amount) }}</p>
                 </div>
                 <Button
-                    label="Konfirmasi Donasi"
-                    icon="pi pi-check"
+                    label="Donasi Sekarang"
+                    icon="pi pi-credit-card"
                     class="w-full"
                     @click="confirmBacking"
                     :loading="isProcessing"
                 />
+        
             </div>
         </Dialog>
     </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { useAppStore } from '@/stores/app';
 import { useCampaign } from '@/composables/useCampaign';
 import { campaignApi, backingApi } from '@/services/api';
@@ -207,6 +260,7 @@ import Button from 'primevue/button';
 import { useToast } from 'primevue/usetoast';
 
 const route = useRoute();
+const router = useRouter();
 const appStore = useAppStore();
 const toast = useToast();
 const { formatCurrency, formatDate, getProgress, getDaysRemaining } = useCampaign();
@@ -217,10 +271,28 @@ const showBackingDialog = ref(false);
 const selectedTier = ref(null);
 const backingAmount = ref(10000);
 const isProcessing = ref(false);
+const backingsCount = ref(0);
+const chartCanvas = ref(null);
+
+const isCreator = computed(() => {
+    return appStore.isAuthenticated && appStore.user?.id === campaign.value?.creator?.id;
+});
+
+function getYouTubeId(url) {
+    if (!url) return null;
+    const patterns = [
+        /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
+        /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/,
+    ];
+    for (const p of patterns) {
+        const match = url.match(p);
+        if (match) return match[1];
+    }
+    return null;
+}
 
 function selectTier(tier) {
     selectedTier.value = tier;
-    // Auto-set amount to tier minimum
     if (tier.min_amount > backingAmount.value) {
         backingAmount.value = tier.min_amount;
     }
@@ -231,6 +303,9 @@ async function fetchCampaign() {
     try {
         const response = await campaignApi.getById(route.params.id);
         campaign.value = response.data.data;
+        if (response.data.data.backings_count) {
+            backingsCount.value = response.data.data.backings_count;
+        }
     } catch {
         campaign.value = null;
     } finally {
@@ -243,24 +318,27 @@ async function confirmBacking() {
 
     isProcessing.value = true;
     try {
-        await backingApi.create({
+        const response = await backingApi.create({
             campaign_id: campaign.value.id,
             tier_id: selectedTier.value?.id || null,
             amount: backingAmount.value,
         });
+
         toast.add({
             severity: 'success',
-            summary: 'Sukses',
-            detail: 'Donasi berhasil dibuat!',
-            life: 3000,
+            summary: 'Donasi Berhasil!',
+            detail: `Anda telah mendonasikan ${formatCurrency(backingAmount.value)} untuk kampanye ini.`,
+            life: 5000,
         });
         showBackingDialog.value = false;
+        selectedTier.value = null;
         await fetchCampaign();
+        await appStore.fetchUser();
     } catch (error) {
         toast.add({
             severity: 'error',
             summary: 'Gagal',
-            detail: error.response?.data?.message || 'Donasi gagal',
+            detail: error.response?.data?.message || 'Terjadi kesalahan saat memproses donasi',
             life: 3000,
         });
     } finally {
@@ -268,5 +346,109 @@ async function confirmBacking() {
     }
 }
 
-onMounted(fetchCampaign);
+function drawChart() {
+    if (!chartCanvas.value || !campaign.value) return;
+    const canvas = chartCanvas.value;
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.scale(dpr, dpr);
+    const w = rect.width;
+    const h = rect.height;
+    const padding = { top: 20, bottom: 30, left: 10, right: 10 };
+    const chartW = w - padding.left - padding.right;
+    const chartH = h - padding.top - padding.bottom;
+
+    const collected = campaign.value.collected_amount || 0;
+    const target = campaign.value.target_amount || 1;
+    const progress = Math.min(collected / target, 1);
+
+    ctx.clearRect(0, 0, w, h);
+
+    ctx.strokeStyle = '#2A2A3E';
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= 4; i++) {
+        const y = padding.top + (chartH / 4) * i;
+        ctx.beginPath();
+        ctx.moveTo(padding.left, y);
+        ctx.lineTo(w - padding.right, y);
+        ctx.stroke();
+        ctx.fillStyle = '#5A5A7A';
+        ctx.font = '10px Inter, sans-serif';
+        ctx.textAlign = 'right';
+        ctx.fillText(`${(100 - i * 25)}%`, padding.left - 5, y + 3);
+    }
+
+    const barY = padding.top;
+    const barH = chartH;
+    const barW = chartW * 0.6;
+    const barX = padding.left + chartW * 0.1;
+
+    ctx.fillStyle = '#2A2A3E';
+    ctx.beginPath();
+    ctx.roundRect(barX, barY, barW, barH, 6);
+    ctx.fill();
+
+    const fillH = barH * progress;
+    const fillY = barY + barH - fillH;
+    const gradient = ctx.createLinearGradient(barX, fillY, barX, barY + barH);
+    gradient.addColorStop(0, '#FF6363');
+    gradient.addColorStop(1, '#FF8585');
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.roundRect(barX, fillY, barW, fillH, 6);
+    ctx.fill();
+
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = 'bold 14px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`${Math.round(progress * 100)}%`, barX + barW / 2, barY + barH / 2 + 5);
+
+    ctx.fillStyle = '#888899';
+    ctx.font = '11px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Terkumpul', barX + barW / 2, h - 8);
+
+    const milestones = [25, 50, 75, 100];
+    milestones.forEach(m => {
+        const mY = barY + barH - (barH * m / 100);
+        ctx.fillStyle = progress * 100 >= m ? '#FF6363' : '#3A3A5A';
+        ctx.beginPath();
+        ctx.arc(barX + barW + 15, mY, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#5A5A7A';
+        ctx.font = '9px Inter, sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText(`${m}%`, barX + barW + 22, mY + 3);
+    });
+}
+
+watch([campaign, chartCanvas], async () => {
+    if (campaign.value && chartCanvas.value) {
+        await nextTick();
+        drawChart();
+    }
+}, { deep: true });
+
+onMounted(async () => {
+    await fetchCampaign();
+    if (chartCanvas.value) {
+        await nextTick();
+        drawChart();
+    }
+});
+
+let resizeHandler;
+if (typeof window !== 'undefined') {
+    resizeHandler = () => {
+        if (chartCanvas.value) drawChart();
+    };
+    window.addEventListener('resize', resizeHandler);
+}
+
+onUnmounted(() => {
+    if (resizeHandler) window.removeEventListener('resize', resizeHandler);
+});
 </script>

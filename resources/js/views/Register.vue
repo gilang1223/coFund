@@ -17,7 +17,7 @@
             </div>
 
             <div class="card p-8">
-                <form @submit.prevent="handleRegister" class="space-y-4">
+                <form v-if="!registered" @submit.prevent="handleRegister" class="space-y-4">
                     <!-- Name -->
                     <div class="transition-all duration-200" :class="{ 'opacity-80': isLoading }">
                         <label class="block text-sm font-medium text-gray-300 mb-1">Nama Lengkap</label>
@@ -109,41 +109,39 @@
                         </Transition>
                     </div>
 
-                    <!-- Role -->
+                    <!-- Confirm Password -->
                     <div class="transition-all duration-200" :class="{ 'opacity-80': isLoading }">
-                        <label class="block text-sm font-medium text-gray-300 mb-2">Role</label>
-                        <div class="flex gap-2">
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Konfirmasi Password</label>
+                        <div class="relative">
+                            <i class="pi pi-lock-open absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm"></i>
+                            <input
+                                :type="showConfirmPassword ? 'text' : 'password'"
+                                v-model="confirmPassword"
+                                placeholder="Ulangi password"
+                                class="input-field pl-10 pr-10 transition-all duration-200"
+                                :class="{ 'border-orange-500/50 focus:border-orange-500': errors.confirmPassword, 'focus:border-brand-500/50': !errors.confirmPassword }"
+                                :disabled="isLoading"
+                            />
                             <button
                                 type="button"
-                                @click="role = 'backer'"
-                                :class="[
-                                    'flex-1 px-4 py-2.5 rounded-md text-sm font-medium transition-all duration-200 border',
-                                    role === 'backer'
-                                        ? 'bg-blue-500/10 text-blue-400 border-blue-500/30 shadow-sm'
-                                        : 'bg-navy-800 text-gray-500 border-navy-700 hover:text-gray-300 hover:border-navy-600'
-                                ]"
-                                :disabled="isLoading"
+                                @click="showConfirmPassword = !showConfirmPassword"
+                                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+                                tabindex="-1"
                             >
-                                <i class="pi pi-heart mr-1.5"></i> Backer
-                            </button>
-                            <button
-                                type="button"
-                                @click="role = 'creator'"
-                                :class="[
-                                    'flex-1 px-4 py-2.5 rounded-md text-sm font-medium transition-all duration-200 border',
-                                    role === 'creator'
-                                        ? 'bg-brand-500/10 text-brand-400 border-brand-500/30 shadow-sm'
-                                        : 'bg-navy-800 text-gray-500 border-navy-700 hover:text-gray-300 hover:border-navy-600'
-                                ]"
-                                :disabled="isLoading"
-                            >
-                                <i class="pi pi-megaphone mr-1.5"></i> Creator
+                                <i :class="showConfirmPassword ? 'pi pi-eye-slash' : 'pi pi-eye'" class="text-sm"></i>
                             </button>
                         </div>
-                        <p class="text-xs text-gray-600 mt-1.5">
-                            <template v-if="role === 'backer'">Donatur — dukung kampanye yang Anda percaya</template>
-                            <template v-else>Pembuat — buat dan kelola kampanye Anda</template>
-                        </p>
+                        <Transition name="slide-down">
+                            <small v-if="errors.confirmPassword" class="text-orange-400 flex items-center gap-1 mt-1">
+                                <i class="pi pi-exclamation-circle text-xs"></i> {{ errors.confirmPassword }}
+                            </small>
+                        </Transition>
+                    </div>
+
+                    <!-- Info: akun baru sebagai backer -->
+                    <div class="flex items-start gap-2 px-3 py-2.5 rounded-md bg-blue-500/5 border border-blue-500/20 text-xs text-blue-400">
+                        <i class="pi pi-info-circle mt-0.5 shrink-0"></i>
+                        <span>Akun baru terdaftar sebagai <strong>Backer</strong>. Untuk menjadi Creator, ajukan request setelah login.</span>
                     </div>
 
                     <!-- Error Alert -->
@@ -166,7 +164,28 @@
                     </button>
                 </form>
 
-                <div class="mt-6 text-center text-sm">
+                <!-- Registration success with verification notice -->
+                <Transition name="slide-down">
+                    <div v-if="registered" class="text-center py-4">
+                        <div class="w-16 h-16 rounded-full bg-brand-500/10 flex items-center justify-center mx-auto mb-4">
+                            <i class="pi pi-envelope text-brand-400 text-2xl"></i>
+                        </div>
+                        <h2 class="text-lg font-semibold text-white mb-2">Pendaftaran Berhasil! 🎉</h2>
+                        <p class="text-sm text-gray-400 leading-relaxed mb-4">
+                            Kami telah mengirimkan email verifikasi ke <strong class="text-gray-300">{{ email }}</strong>.<br>
+                            Silakan cek inbox Anda dan verifikasi email sebelum login.
+                        </p>
+                        <router-link
+                            to="/login"
+                            class="inline-flex items-center gap-2 px-6 py-2.5 bg-brand-500 text-white font-medium rounded-md hover:bg-brand-600 transition-all duration-200"
+                        >
+                            <i class="pi pi-sign-in"></i>
+                            Login Sekarang
+                        </router-link>
+                    </div>
+                </Transition>
+
+                <div v-if="!registered" class="mt-6 text-center text-sm">
                     <span class="text-gray-500">Sudah punya akun?</span>
                     <router-link to="/login" class="text-brand-400 font-medium hover:text-brand-300 transition-colors ml-1">
                         Login
@@ -181,20 +200,37 @@
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuth } from '@/composables/useAuth';
+import { useForm, useField } from 'vee-validate';
+import * as yup from 'yup';
 
 const router = useRouter();
 const { register, isLoading, error } = useAuth();
 
-const name = ref('');
-const email = ref('');
-const password = ref('');
-const role = ref('backer');
-const errors = ref({});
+const schema = yup.object({
+    name: yup.string().required('Nama wajib diisi'),
+    email: yup.string().required('Email wajib diisi').email('Format email tidak valid'),
+    password: yup.string().required('Password wajib diisi').min(8, 'Password minimal 8 karakter'),
+    confirmPassword: yup.string()
+        .required('Konfirmasi password wajib diisi')
+        .oneOf([yup.ref('password')], 'Konfirmasi password tidak cocok'),
+});
+
+const { handleSubmit, errors } = useForm({
+    validationSchema: schema,
+});
+
+const { value: name } = useField('name');
+const { value: email } = useField('email');
+const { value: password } = useField('password');
+const { value: confirmPassword } = useField('confirmPassword');
+
 const showPassword = ref(false);
+const showConfirmPassword = ref(false);
 const strengthLevel = ref(0);
+const registered = ref(false);
 
 function updateStrength() {
-    const pwd = password.value;
+    const pwd = password.value || '';
     let score = 0;
     if (pwd.length >= 8) score++;
     if (/[a-z]/.test(pwd) && /[A-Z]/.test(pwd)) score++;
@@ -231,19 +267,18 @@ const strengthIcon = computed(() => {
     return 'pi pi-verified';
 });
 
-async function handleRegister() {
-    errors.value = {};
-    let hasError = false;
-    if (!name.value) { errors.value.name = 'Nama wajib diisi'; hasError = true; }
-    if (!email.value) { errors.value.email = 'Email wajib diisi'; hasError = true; }
-    if (!password.value || password.value.length < 8) { errors.value.password = 'Password minimal 8 karakter'; hasError = true; }
-    if (hasError) return;
-
+const handleRegister = handleSubmit(async (values) => {
     try {
-        await register({ name: name.value, email: email.value, password: password.value, role: role.value });
-        router.push('/dashboard');
+        await register({
+            name: values.name,
+            email: values.email,
+            password: values.password,
+            password_confirmation: values.confirmPassword,
+        });
+        // Show verification notice instead of immediately redirecting
+        registered.value = true;
     } catch {
         // error is handled by composable
     }
-}
+});
 </script>

@@ -1,0 +1,445 @@
+/* ==================== LIGHT MODE OVERRIDES ==================== */
+/* Applied when <html> has class "light-mode" */
+
+.light-mode {
+    /* Backgrounds */
+    --bg-primary: #F8F9FA;
+    --bg-secondary: #FFFFFF;
+    --bg-tertiary: #F0F2F5;
+    --bg-card: #FFFFFF;
+    --bg-nav: rgba(255, 255, 255, 0.9);
+    --bg-input: #FFFFFF;
+
+    /* Text */
+    --text-primary: #1A1A2E;
+    --text-secondary: #4A4A6A;
+    --text-tertiary: #8A8AAA;
+    --text-muted: #AAAAAA;
+
+    /* Borders */
+    --border-color: #E5E7EB;
+    --border-hover: #D1D5DB;
+
+    /* Surface */
+    --surface: #FFFFFF;
+    --surface-hover: #F9FAFB;
+
+    /* Badge backgrounds */
+    --badge-bg: #F3F4F6;
+}
+
+.light-mode body {
+    background-color: var(--bg-primary) !important;
+    color: var(--text-primary) !important;
+}
+
+/* App shell */
+.light-mode #app {
+    background-color: var(--bg-primary) !important;
+}
+
+/* Nav */
+.light-mode nav,
+.light-mode .bg-navy-900\/80 {
+    background-color: var(--bg-nav) !important;
+    border-bottom-color: var(--border-color) !important;
+}
+
+.light-mode .bg-navy-900\/95 {
+    background-color: var(--bg-nav) !important;
+}
+
+.light-mode .bg-navy-950 {
+    background-color: var(--bg-primary) !important;
+}
+
+.light-mode .bg-navy-900 {
+    background-color: var(--bg-secondary) !important;
+}
+
+.light-mode .bg-navy-800 {
+    background-color: var(--bg-card) !important;
+}
+
+.light-mode .bg-navy-800\/50 {
+    background-color: var(--bg-tertiary) !important;
+}
+
+.light-mode .bg-navy-800\/60 {
+    background-color: var(--bg-tertiary) !important;
+}
+
+.light-mode .bg-navy-700 {
+    background-color: var(--bg-tertiary) !important;
+}
+
+.light-mode .bg-navy-700\/20 {
+    background-color: var(--bg-tertiary) !important;
+}
+
+.light-mode .bg-navy-700\/50 {
+    background-color: var(--bg-tertiary) !important;
+}
+
+/* Cards */
+.light-mode .card,
+.light-mode .bg-navy-800.rounded-lg {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+}
+
+.light-mode .card-hover:hover {
+    border-color: var(--border-hover) !important;
+}
+
+/* Text colors */
+.light-mode .text-white {
+    color: var(--text-primary) !important;
+}
+
+.light-mode .text-gray-100 {
+    color: var(--text-secondary) !important;
+}
+
+.light-mode .text-gray-200 {
+    color: var(--text-primary) !important;
+}
+
+.light-mode .text-gray-300 {
+    color: var(--text-secondary) !important;
+}
+
+.light-mode .text-gray-400 {
+    color: var(--text-tertiary) !important;
+}
+
+.light-mode .text-gray-500 {
+    color: var(--text-tertiary) !important;
+}
+
+.light-mode .text-gray-600 {
+    color: var(--text-muted) !important;
+}
+
+.light-mode .text-navy-700 {
+    color: var(--border-color) !important;
+}
+
+/* Borders */
+.light-mode .border-navy-700 {
+    border-color: var(--border-color) !important;
+}
+
+.light-mode .border-navy-700\/30 {
+    border-color: var(--border-color) !important;
+}
+
+.light-mode .border-navy-700\/50 {
+    border-color: var(--border-color) !important;
+}
+
+.light-mode .divide-navy-800\/50 > * + * {
+    border-color: var(--border-color) !important;
+}
+
+.light-mode .hover\:border-navy-600:hover {
+    border-color: var(--border-hover) !important;
+}
+
+/* Input fields */
+.light-mode .input-field,
+.light-mode input,
+.light-mode textarea,
+.light-mode select {
+    background-color: var(--bg-input) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-primary) !important;
+}
+
+.light-mode .input-field:focus,
+.light-mode input:focus,
+.light-mode textarea:focus,
+.light-mode select:focus {
+    border-color: #FF6363 !important;
+}
+
+.light-mode .input-field::placeholder,
+.light-mode input::placeholder,
+.light-mode textarea::placeholder {
+    color: var(--text-muted) !important;
+}
+
+/* Buttons */
+.light-mode .btn-ghost {
+    color: var(--text-secondary) !important;
+}
+
+.light-mode .btn-ghost:hover {
+    background-color: var(--bg-tertiary) !important;
+    color: var(--text-primary) !important;
+}
+
+/* Skeleton */
+.light-mode .skeleton {
+    background-color: #E5E7EB !important;
+}
+
+/* Progress bar */
+.light-mode .progress-bar {
+    background-color: #E5E7EB !important;
+}
+
+/* Badges */
+.light-mode .badge-draft {
+    background-color: #FEF3C7 !important;
+    color: #92400E !important;
+    border-color: #FDE68A !important;
+}
+
+.light-mode .badge-active {
+    background-color: #D1FAE5 !important;
+    color: #065F46 !important;
+    border-color: #A7F3D0 !important;
+}
+
+.light-mode .badge-success {
+    background-color: #FEE2E2 !important;
+    color: #991B1B !important;
+    border-color: #FECACA !important;
+}
+
+.light-mode .badge-failed {
+    background-color: #FFEDD5 !important;
+    color: #9A3412 !important;
+    border-color: #FED7AA !important;
+}
+
+.light-mode .badge-default {
+    background-color: #F3F4F6 !important;
+    color: #4B5563 !important;
+    border-color: #E5E7EB !important;
+}
+
+/* Background patterns */
+.light-mode .bg-pattern-dots {
+    opacity: 0.3;
+}
+
+.light-mode .bg-glow-top {
+    background: radial-gradient(ellipse at top, rgba(255, 99, 99, 0.03) 0%, transparent 70%);
+}
+
+/* Footer */
+.light-mode footer {
+    border-top-color: var(--border-color) !important;
+    background-color: var(--bg-secondary) !important;
+}
+
+/* Mobile menu */
+.light-mode .md\\:hidden.border-t {
+    border-top-color: var(--border-color) !important;
+}
+
+/* Hover states */
+.light-mode .hover\\:bg-navy-700:hover {
+    background-color: var(--bg-tertiary) !important;
+}
+
+.light-mode .hover\\:bg-navy-700\/50:hover {
+    background-color: var(--bg-tertiary) !important;
+}
+
+.light-mode .hover\\:text-white:hover {
+    color: var(--text-primary) !important;
+}
+
+.light-mode .group:hover .group-hover\\:text-white {
+    color: var(--text-primary) !important;
+}
+
+.light-mode .group:hover .group-hover\\:text-brand-400 {
+    color: #FF6363 !important;
+}
+
+/* Tables */
+.light-mode th {
+    color: var(--text-muted) !important;
+}
+
+.light-mode td {
+    color: var(--text-secondary) !important;
+}
+
+.light-mode .hover\\:bg-navy-800\\/30:hover {
+    background-color: var(--bg-tertiary) !important;
+}
+
+/* PrimeVue overrides for light mode */
+.light-mode .p-inputtext,
+.light-mode .p-dropdown,
+.light-mode .p-calendar,
+.light-mode .p-inputnumber {
+    background-color: var(--bg-input) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-primary) !important;
+}
+
+.light-mode .p-dropdown .p-dropdown-trigger {
+    color: var(--text-muted) !important;
+}
+
+.light-mode .p-dropdown-panel,
+.light-mode .p-calendar-panel {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+}
+
+.light-mode .p-dropdown-items-wrapper {
+    background-color: var(--bg-card) !important;
+}
+
+.light-mode .p-dropdown-item {
+    color: var(--text-secondary) !important;
+}
+
+.light-mode .p-dropdown-item:hover {
+    background-color: var(--bg-tertiary) !important;
+    color: var(--text-primary) !important;
+}
+
+.light-mode .p-dropdown-item.p-highlight {
+    background-color: rgba(255, 99, 99, 0.1) !important;
+    color: #FF6363 !important;
+}
+
+.light-mode .p-dialog {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+}
+
+.light-mode .p-dialog-header {
+    background-color: var(--bg-card) !important;
+    color: var(--text-primary) !important;
+    border-bottom-color: var(--border-color) !important;
+}
+
+.light-mode .p-dialog-content {
+    background-color: var(--bg-card) !important;
+    color: var(--text-secondary) !important;
+}
+
+.light-mode .p-dialog-footer {
+    background-color: var(--bg-card) !important;
+    border-top-color: var(--border-color) !important;
+}
+
+.light-mode .p-dialog-mask {
+    background-color: rgba(0, 0, 0, 0.3) !important;
+}
+
+.light-mode .p-toast-message {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-primary) !important;
+}
+
+.light-mode .p-toast-icon-close {
+    color: var(--text-muted) !important;
+}
+
+.light-mode .p-button.p-button-secondary {
+    background-color: var(--bg-tertiary) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-secondary) !important;
+}
+
+.light-mode .p-button.p-button-text {
+    color: var(--text-secondary) !important;
+}
+
+.light-mode .p-button.p-button-text:hover {
+    background-color: var(--bg-tertiary) !important;
+    color: var(--text-primary) !important;
+}
+
+.light-mode .p-selectbutton .p-button {
+    background-color: var(--bg-tertiary) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-muted) !important;
+}
+
+.light-mode .p-textarea {
+    background-color: var(--bg-input) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-primary) !important;
+}
+
+.light-mode .p-password-panel {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-secondary) !important;
+}
+
+.light-mode .p-inputnumber-button {
+    background-color: var(--bg-tertiary) !important;
+    color: var(--text-muted) !important;
+    border-color: var(--border-color) !important;
+}
+
+.light-mode .p-inputnumber-button:hover {
+    background-color: var(--bg-tertiary) !important;
+    color: var(--text-primary) !important;
+}
+
+/* Dialog enter animation */
+.light-mode .p-dialog-mask {
+    background-color: rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Fix badge background colors in light mode */
+.light-mode .bg-brand-500\/10 {
+    background-color: rgba(255, 99, 99, 0.08) !important;
+}
+
+.light-mode .bg-brand-500\/20 {
+    background-color: rgba(255, 99, 99, 0.12) !important;
+}
+
+.light-mode .bg-green-500\/10 {
+    background-color: rgba(16, 185, 129, 0.08) !important;
+}
+
+.light-mode .bg-orange-500\/10 {
+    background-color: rgba(249, 115, 22, 0.08) !important;
+}
+
+.light-mode .bg-red-500\/10 {
+    background-color: rgba(239, 68, 68, 0.08) !important;
+}
+
+.light-mode .bg-yellow-500\/10 {
+    background-color: rgba(245, 158, 11, 0.08) !important;
+}
+
+.light-mode .bg-purple-500\/10 {
+    background-color: rgba(139, 92, 246, 0.08) !important;
+}
+
+.light-mode .bg-blue-500\/10 {
+    background-color: rgba(59, 130, 246, 0.08) !important;
+}
+
+/* Card text fixes in light mode */
+.light-mode .text-brand-100 {
+    color: #4A4A6A !important;
+}
+
+.light-mode .text-navy-600 {
+    color: #D1D5DB !important;
+}
+
+/* Fix selection color */
+.light-mode ::selection {
+    background-color: rgba(255, 99, 99, 0.2) !important;
+    color: #1A1A2E !important;
+}

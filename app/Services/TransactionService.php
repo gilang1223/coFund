@@ -31,15 +31,21 @@ class TransactionService extends BaseService
     }
 
     /**
-     * Process disbursement for a successful campaign (admin only).
-     * Fee: 5% platform fee. Credits creator's balance.
+     * Process disbursement for a successful campaign.
+     * Fee: 5% platform fee deducted at disbursement (Rule 8). Credits creator's balance.
+     * Can process from 'success' or 'active' (if target reached before deadline).
      */
     public function processDisbursement(int $campaignId): ?Transaction
     {
         return DB::transaction(function () use ($campaignId) {
             $campaign = Campaign::lockForUpdate()->find($campaignId);
 
-            if (!$campaign || $campaign->status !== 'active' || !$campaign->isExpired()) {
+            if (!$campaign) {
+                return null;
+            }
+
+            // Must be active
+            if ($campaign->status !== 'active') {
                 return null;
             }
 
@@ -47,8 +53,22 @@ class TransactionService extends BaseService
                 return null;
             }
 
-            // Mark campaign as success
-            $campaign->update(['status' => 'success']);
+            // Check if already disbursed for this campaign (reference includes campaign ID)
+            $alreadyDisbursed = Transaction::where('type', 'disbursement')
+                ->where('user_id', $campaign->user_id)
+                ->where('reference', 'LIKE', 'DISB-' . $campaign->id . '-%')
+                ->whereNull('backing_id')
+                ->where('status', 'success')
+                ->exists();
+
+            if ($alreadyDisbursed) {
+                return null;
+            }
+
+            // Mark campaign as success if not already
+            if ($campaign->status !== 'success') {
+                $campaign->update(['status' => 'success']);
+            }
 
             // Calculate fee (5%)
             $platformFee = round($campaign->collected_amount * 0.05, 2);
@@ -65,7 +85,7 @@ class TransactionService extends BaseService
                 'type' => 'disbursement',
                 'amount' => $creatorAmount,
                 'status' => 'success',
-                'reference' => 'DISB-' . strtoupper(uniqid()),
+                'reference' => 'DISB-' . $campaign->id . '-' . strtoupper(uniqid()),
             ]);
 
             // Create platform fee transaction
@@ -75,15 +95,25 @@ class TransactionService extends BaseService
                 'type' => 'platform_fee',
                 'amount' => $platformFee,
                 'status' => 'success',
-                'reference' => 'FEE-' . strtoupper(uniqid()),
+                'reference' => 'FEE-' . $campaign->id . '-' . strtoupper(uniqid()),
             ]);
+
+            // Send notification + email to creator (synchronous)
+            \App\Jobs\SendNotificationJob::dispatchSync(
+                $campaign->user_id,
+                'campaign_success',
+                'Kampanye Berhasil! 🎉',
+                "Dana kampanye \"{$campaign->title}\" sebesar Rp " . number_format($creatorAmount, 0, ',', '.') . " telah dicairkan ke saldo Anda (setelah fee 5%).",
+                ['campaign_id' => $campaign->id, 'amount' => $creatorAmount, 'fee' => $platformFee],
+                true, // send email
+            );
 
             return $disbursement->load(['user']);
         });
     }
 
     /**
-     * Process refunds for a failed campaign (admin only).
+     * Process refunds for a failed campaign.
      * Credits back each backer's balance.
      */
     public function processRefunds(int $campaignId): bool
@@ -91,11 +121,16 @@ class TransactionService extends BaseService
         return DB::transaction(function () use ($campaignId) {
             $campaign = Campaign::lockForUpdate()->find($campaignId);
 
-            if (!$campaign || $campaign->status !== 'active' || !$campaign->isExpired()) {
+            if (!$campaign) {
                 return false;
             }
 
-            if ($campaign->hasReachedTarget()) {
+            // Can refund from 'active' (expired + not reached target) or 'failed'
+            if (!in_array($campaign->status, ['active', 'failed'])) {
+                return false;
+            }
+
+            if ($campaign->hasReachedTarget() && $campaign->status !== 'failed') {
                 return false;
             }
 

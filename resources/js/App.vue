@@ -5,16 +5,13 @@
 
 <script setup>
 import { onMounted, onUnmounted } from 'vue';
-import { useRouter } from 'vue-router';
 import { useAppStore } from '@/stores/app';
 import Toast from 'primevue/toast';
 
-const router = useRouter();
 const appStore = useAppStore();
 
 function handleUnauthorized() {
     appStore.clearUser();
-    router.push('/login');
 }
 
 onMounted(() => {

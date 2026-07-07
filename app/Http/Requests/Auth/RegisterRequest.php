@@ -20,10 +20,10 @@ class RegisterRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:8',
-            'role' => 'sometimes|in:backer,creator',
+            'name'                  => 'required|string|max:255',
+            'email'                 => 'required|email|unique:users,email',
+            'password'              => 'required|string|min:8|confirmed',
+            'password_confirmation' => 'required|string',
         ];
     }
 
@@ -33,13 +33,14 @@ class RegisterRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.required' => 'Nama wajib diisi.',
-            'email.required' => 'Email wajib diisi.',
-            'email.email' => 'Format email tidak valid.',
-            'email.unique' => 'Email sudah terdaftar.',
-            'password.required' => 'Password wajib diisi.',
-            'password.min' => 'Password minimal 8 karakter.',
-            'role.in' => 'Role harus backer atau creator.',
+            'name.required'                  => 'Nama wajib diisi.',
+            'email.required'                 => 'Email wajib diisi.',
+            'email.email'                    => 'Format email tidak valid.',
+            'email.unique'                   => 'Email sudah terdaftar.',
+            'password.required'              => 'Password wajib diisi.',
+            'password.min'                   => 'Password minimal 8 karakter.',
+            'password.confirmed'             => 'Konfirmasi password tidak cocok.',
+            'password_confirmation.required' => 'Konfirmasi password wajib diisi.',
         ];
     }
 }

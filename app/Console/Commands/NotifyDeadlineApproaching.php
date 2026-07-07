@@ -52,7 +52,8 @@ class NotifyDeadlineApproaching extends Command
                         'campaign_id' => $campaign->id,
                         'days_left' => 3,
                         'progress' => $campaign->collected_amount / max($campaign->target_amount, 1) * 100,
-                    ]
+                    ],
+                    false // send email (in-app only)
                 );
                 $notifiedCount++;
             }

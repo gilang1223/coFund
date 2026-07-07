@@ -36,12 +36,30 @@ class DisburseCampaignJob implements ShouldQueue
         DB::transaction(function () {
             $campaign = Campaign::lockForUpdate()->find($this->campaignId);
 
-            if (!$campaign || $campaign->status !== 'active' || !$campaign->hasReachedTarget()) {
+            if (!$campaign || $campaign->status !== 'active') {
                 return;
             }
 
-            // Mark campaign as success
-            $campaign->update(['status' => 'success']);
+            if (!$campaign->hasReachedTarget()) {
+                return;
+            }
+
+            // Check if already disbursed for this campaign
+            $alreadyDisbursed = Transaction::where('type', 'disbursement')
+                ->where('user_id', $campaign->user_id)
+                ->where('reference', 'LIKE', 'DISB-' . $campaign->id . '-%')
+                ->whereNull('backing_id')
+                ->where('status', 'success')
+                ->exists();
+
+            if ($alreadyDisbursed) {
+                return;
+            }
+
+            // Mark campaign as success if not already
+            if ($campaign->status !== 'success') {
+                $campaign->update(['status' => 'success']);
+            }
 
             // Calculate fee (5%)
             $platformFee = round($campaign->collected_amount * 0.05, 2);
@@ -58,7 +76,7 @@ class DisburseCampaignJob implements ShouldQueue
                 'type' => 'disbursement',
                 'amount' => $creatorAmount,
                 'status' => 'success',
-                'reference' => 'DISB-' . strtoupper(uniqid()),
+                'reference' => 'DISB-' . $campaign->id . '-' . strtoupper(uniqid()),
             ]);
 
             // Create platform fee transaction
@@ -68,7 +86,7 @@ class DisburseCampaignJob implements ShouldQueue
                 'type' => 'platform_fee',
                 'amount' => $platformFee,
                 'status' => 'success',
-                'reference' => 'FEE-' . strtoupper(uniqid()),
+                'reference' => 'FEE-' . $campaign->id . '-' . strtoupper(uniqid()),
             ]);
 
             // Send notification + email to creator

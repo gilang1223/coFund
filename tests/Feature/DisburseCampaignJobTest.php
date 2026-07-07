@@ -51,7 +51,7 @@ class DisburseCampaignJobTest extends TestCase
 
         // Assert: creator balance increased
         $this->creator->refresh();
-        $this->assertEquals($expectedAmount, $this->creator->balance);
+        $this->assertEquals(round($expectedAmount, 2), round((float) $this->creator->balance, 2));
 
         // Assert: disbursement transaction created
         $disbursement = Transaction::where('type', 'disbursement')

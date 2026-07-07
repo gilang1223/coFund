@@ -29,6 +29,8 @@ class Campaign extends Model
         'deadline',
         'status',
         'video_url',
+        'rejection_note',
+        'rejected_at',
     ];
 
     /**
@@ -40,6 +42,7 @@ class Campaign extends Model
         'target_amount' => 'decimal:2',
         'collected_amount' => 'decimal:2',
         'deadline' => 'datetime',
+        'rejected_at' => 'datetime',
     ];
 
     /**

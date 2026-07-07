@@ -34,51 +34,52 @@
 
         <!-- Backing List -->
         <div v-else class="space-y-4">
-            <div
-                v-for="backing in backings"
-                :key="backing.id"
-                class="card p-5 hover:border-navy-600 transition-all duration-200"
-            >
-                <div class="flex flex-col sm:flex-row gap-4">
-                    <!-- Campaign Thumb -->
-                    <router-link
-                        :to="`/campaigns/${backing.campaign?.id}`"
-                        class="shrink-0"
-                    >
-                        <div class="w-full sm:w-24 h-24 bg-gradient-to-br from-brand-500/20 to-navy-700 rounded-md flex items-center justify-center text-navy-600">
-                            <i class="pi pi-image text-3xl"></i>
-                        </div>
-                    </router-link>
-
-                    <div class="flex-1 min-w-0">
-                        <div class="flex items-start justify-between gap-3">
-                            <div class="min-w-0">
-                                <router-link
-                                    :to="`/campaigns/${backing.campaign?.id}`"
-                                    class="text-sm font-semibold text-white hover:text-brand-400 transition-colors line-clamp-1"
-                                >
-                                    {{ backing.campaign?.title || 'Unknown Campaign' }}
-                                </router-link>
-                                <p class="text-xs text-gray-500 mt-1">
-                                    Donasi {{ formatCurrency(backing.amount) }}
-                                </p>
+            <!-- Backings List (semua status) -->
+            <div v-if="backings.length > 0">
+                <div
+                    v-for="backing in backings"
+                    :key="backing.id"
+                    class="card p-5 hover:border-navy-600 transition-all duration-200"
+                >
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <router-link
+                            :to="`/campaigns/${backing.campaign?.id}`"
+                            class="shrink-0"
+                        >
+                            <div class="w-full sm:w-24 h-24 bg-gradient-to-br from-brand-500/20 to-navy-700 rounded-md overflow-hidden flex items-center justify-center text-navy-600">
+                                <img v-if="backing.campaign?.primary_image?.url && !brokenImages.has(backing.campaign.id)" :src="backing.campaign.primary_image.url" :alt="backing.campaign?.title" class="w-full h-full object-cover" @error="brokenImages.add(backing.campaign.id)" />
+                                <i v-else class="pi pi-image text-3xl"></i>
                             </div>
-                            <div class="shrink-0 text-right">
-                                <span :class="getStatusBadgeClass(backing.status)">
-                                    {{ backing.status }}
+                        </router-link>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="min-w-0">
+                                    <router-link
+                                        :to="`/campaigns/${backing.campaign?.id}`"
+                                        class="text-sm font-semibold text-white hover:text-brand-400 transition-colors line-clamp-1"
+                                    >
+                                        {{ backing.campaign?.title || 'Unknown Campaign' }}
+                                    </router-link>
+                                    <p class="text-xs text-gray-500 mt-1">
+                                        Donasi {{ formatCurrency(backing.amount) }}
+                                    </p>
+                                </div>
+                                <div class="shrink-0 text-right">
+                                    <span :class="getStatusBadgeClass(backing.status)">
+                                        {{ backing.status === 'completed' ? 'Sukses' : backing.status }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-3 text-xs text-gray-600">
+                                <span v-if="backing.tier">
+                                    <i class="pi pi-gift mr-1"></i>
+                                    Reward: {{ backing.tier.name }}
+                                </span>
+                                <span>
+                                    <i class="pi pi-calendar mr-1"></i>
+                                    {{ formatDate(backing.created_at) }}
                                 </span>
                             </div>
-                        </div>
-
-                        <div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-3 text-xs text-gray-600">
-                            <span v-if="backing.tier">
-                                <i class="pi pi-gift mr-1"></i>
-                                Reward: {{ backing.tier.name }}
-                            </span>
-                            <span>
-                                <i class="pi pi-calendar mr-1"></i>
-                                {{ formatDate(backing.created_at) }}
-                            </span>
                         </div>
                     </div>
                 </div>
@@ -88,9 +89,11 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useBacking } from '@/composables/useBacking';
 import { useCampaign } from '@/composables/useCampaign';
+
+const brokenImages = ref(new Set());
 
 const { backings, isLoading, fetchMyBackings, getStatusBadgeClass } = useBacking();
 const { formatCurrency, formatDate } = useCampaign();

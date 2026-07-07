@@ -5,14 +5,15 @@
                 <h1 class="text-2xl md:text-3xl font-bold text-white">Campaigns</h1>
                 <p class="text-gray-500 mt-1">Jelajahi kampanye yang sedang berlangsung</p>
             </div>
-            <router-link
-                v-if="appStore.isAuthenticated"
-                to="/campaigns/create"
+            <!-- New Campaign: creator langsung navigasi, backer lihat modal -->
+            <button
+                v-if="!appStore.isAdmin && appStore.isAuthenticated"
+                @click="handleNewCampaign"
                 class="inline-flex items-center px-4 py-2 bg-brand-500 text-white font-medium rounded-md hover:bg-brand-600 transition-all duration-200 shadow-lg shadow-brand-500/20 hover:shadow-brand-500/30"
             >
                 <i class="pi pi-plus mr-2 text-xs"></i>
                 New Campaign
-            </router-link>
+            </button>
         </div>
 
         <!-- Search & Filters -->
@@ -37,16 +38,7 @@
                     {{ cat.name }}
                 </option>
             </select>
-            <select
-                v-model="filterStatus"
-                class="input-field w-auto min-w-[140px] transition-all duration-200 focus:border-brand-500/50"
-                @change="fetchData"
-            >
-                <option value="">Semua Status</option>
-                <option value="active">Active</option>
-                <option value="success">Success</option>
-                <option value="failed">Failed</option>
-            </select>
+
         </div>
 
         <!-- Active Filter Tags -->
@@ -66,15 +58,6 @@
             >
                 <i class="pi pi-tag"></i> {{ getCategoryName(filterCategory) }}
                 <button @click="filterCategory = ''; fetchData()" class="hover:text-white transition-colors">
-                    <i class="pi pi-times text-xs"></i>
-                </button>
-            </span>
-            <span
-                v-if="filterStatus"
-                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-green-500/10 text-green-400 text-xs border border-green-500/20"
-            >
-                <i class="pi pi-filter"></i> {{ filterStatus }}
-                <button @click="filterStatus = ''; fetchData()" class="hover:text-white transition-colors">
                     <i class="pi pi-times text-xs"></i>
                 </button>
             </span>
@@ -132,10 +115,17 @@
                 >
                     <router-link :to="`/campaigns/${campaign.id}`">
                         <div class="h-48 bg-gradient-to-br from-brand-500/20 to-navy-800 relative overflow-hidden">
-                            <div class="absolute inset-0 flex items-center justify-center text-navy-600 group-hover:scale-110 transition-transform duration-500">
+                            <img v-if="campaign.primary_image?.url && !brokenImages.has(campaign.id)" :src="campaign.primary_image.url" :alt="campaign.title" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" @error="brokenImages.add(campaign.id)" />
+                            <div v-else class="absolute inset-0 flex items-center justify-center text-navy-600">
                                 <i class="pi pi-image text-6xl"></i>
                             </div>
                             <div class="absolute inset-0 bg-gradient-to-t from-navy-800 via-transparent to-transparent"></div>
+                            <!-- Play button overlay for video campaigns -->
+                            <div v-if="campaign.video_url" class="absolute inset-0 flex items-center justify-center">
+                                <div class="w-14 h-14 rounded-full bg-brand-500/90 flex items-center justify-center shadow-lg shadow-brand-500/30 hover:bg-brand-500 transition-all duration-200 group-hover:scale-110">
+                                    <i class="pi pi-play text-white text-xl ml-1"></i>
+                                </div>
+                            </div>
                             <div class="absolute top-3 right-3">
                                 <span
                                     :class="[
@@ -143,6 +133,7 @@
                                         campaign.status === 'active' ? 'badge-active' :
                                         campaign.status === 'success' ? 'badge-success' :
                                         campaign.status === 'draft' ? 'badge-draft' :
+                                        campaign.status === 'rejected' ? 'badge-failed' :
                                         'badge-default'
                                     ]"
                                 >
@@ -216,11 +207,24 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { useAppStore } from '@/stores/app';
 import { useCampaign } from '@/composables/useCampaign';
+import { useCreatorGuard } from '@/composables/useCreatorGuard';
 import { categoryApi } from '@/services/api';
 
 const appStore = useAppStore();
+const router = useRouter();
+const { openCreatorModal } = useCreatorGuard();
+
+function handleNewCampaign() {
+    if (appStore.isCreator) {
+        router.push('/campaigns/create');
+    } else {
+        openCreatorModal();
+    }
+}
+
 const {
     campaigns,
     isLoading,
@@ -234,11 +238,11 @@ const {
 const categories = ref([]);
 const searchQuery = ref('');
 const filterCategory = ref('');
-const filterStatus = ref('');
 let debounceTimer = null;
 
+const brokenImages = ref(new Set());
 const hasActiveFilters = computed(() =>
-    searchQuery.value || filterCategory.value || filterStatus.value
+    searchQuery.value || filterCategory.value
 );
 
 function getCategoryName(id) {
@@ -249,7 +253,6 @@ function getCategoryName(id) {
 async function fetchData() {
     const params = { page: meta.value?.current_page || 1 };
     if (filterCategory.value) params.category_id = filterCategory.value;
-    if (filterStatus.value) params.status = filterStatus.value;
     if (searchQuery.value) params.search = searchQuery.value;
     await fetchCampaigns(params);
 }
@@ -262,14 +265,12 @@ function debouncedSearch() {
 function clearAllFilters() {
     searchQuery.value = '';
     filterCategory.value = '';
-    filterStatus.value = '';
     fetchData();
 }
 
 function goToPage(page) {
     const params = { page };
     if (filterCategory.value) params.category_id = filterCategory.value;
-    if (filterStatus.value) params.status = filterStatus.value;
     if (searchQuery.value) params.search = searchQuery.value;
     fetchCampaigns(params);
 }

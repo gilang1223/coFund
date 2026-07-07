@@ -19,7 +19,7 @@ class CampaignNotification extends Mailable
      */
     public function __construct(
         public User $user,
-        public string $subject,
+        public $subject,
         public string $body,
         public ?array $data = null,
     ) {}

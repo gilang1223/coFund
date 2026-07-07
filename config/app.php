@@ -112,6 +112,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Frontend URL
+    |--------------------------------------------------------------------------
+    |
+    | The URL of the frontend/Vue application. Used for redirect URLs in emails
+    | such as email verification and password reset links.
+    |
+    */
+
+    'frontend_url' => env('FRONTEND_URL', 'http://localhost:8000'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Encryption Key
     |--------------------------------------------------------------------------
     |

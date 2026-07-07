@@ -11,7 +11,8 @@ const apiClient = axios.create({
 // Request interceptor to attach token
 apiClient.interceptors.request.use(
     (config) => {
-        const token = localStorage.getItem('auth_token');
+        const isAdminPage = window.location.pathname.startsWith('/admin');
+        const token = localStorage.getItem(isAdminPage ? 'admin_auth_token' : 'auth_token');
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
@@ -25,8 +26,10 @@ apiClient.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response?.status === 401) {
-            localStorage.removeItem('auth_token');
-            window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+            const isAdminPage = window.location.pathname.startsWith('/admin');
+            localStorage.removeItem(isAdminPage ? 'admin_auth_token' : 'auth_token');
+            localStorage.removeItem(isAdminPage ? 'admin_auth_user' : 'auth_user');
+            window.dispatchEvent(new CustomEvent('auth:unauthorized', { detail: { isAdmin: isAdminPage } }));
         }
         return Promise.reject(error);
     }

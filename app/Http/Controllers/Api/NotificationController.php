@@ -29,7 +29,7 @@ class NotificationController extends Controller
 
         $notifications = $query->paginate($perPage);
 
-        return $this->success([
+        return $this->sendResponse('Notifications retrieved successfully', [
             'notifications' => $notifications,
             'unread_count' => UserNotification::where('user_id', $request->user()->id)
                 ->whereNull('read_at')
@@ -46,7 +46,7 @@ class NotificationController extends Controller
             ->whereNull('read_at')
             ->count();
 
-        return $this->success(['unread_count' => $count]);
+        return $this->sendResponse('Unread count retrieved', ['unread_count' => $count]);
     }
 
     /**
@@ -59,7 +59,7 @@ class NotificationController extends Controller
 
         $notification->update(['read_at' => now()]);
 
-        return $this->success(['notification' => $notification]);
+        return $this->sendResponse('Notification marked as read', ['notification' => $notification]);
     }
 
     /**
@@ -71,7 +71,7 @@ class NotificationController extends Controller
             ->whereNull('read_at')
             ->update(['read_at' => now()]);
 
-        return $this->success(['message' => 'All notifications marked as read']);
+        return $this->sendResponse('All notifications marked as read');
     }
 
     /**
@@ -84,6 +84,6 @@ class NotificationController extends Controller
 
         $notification->delete();
 
-        return $this->success(['message' => 'Notification deleted']);
+        return $this->sendResponse('Notification deleted');
     }
 }

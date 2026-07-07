@@ -51,8 +51,9 @@
                 <div class="flex flex-col sm:flex-row gap-4">
                     <!-- Thumbnail -->
                     <router-link :to="`/campaigns/${campaign.id}`" class="shrink-0">
-                        <div class="w-full sm:w-24 h-24 bg-gradient-to-br from-brand-500/20 to-navy-700 rounded-md flex items-center justify-center text-navy-600">
-                            <i class="pi pi-image text-3xl"></i>
+                        <div class="w-full sm:w-24 h-24 bg-gradient-to-br from-brand-500/20 to-navy-700 rounded-md overflow-hidden flex items-center justify-center text-navy-600">
+                            <img v-if="campaign.primary_image?.url && !brokenImages.has(campaign.id)" :src="campaign.primary_image.url" :alt="campaign.title" class="w-full h-full object-cover" @error="brokenImages.add(campaign.id)" />
+                            <i v-else class="pi pi-image text-3xl"></i>
                         </div>
                     </router-link>
 
@@ -118,7 +119,53 @@
                             >
                                 <i class="pi pi-send mr-1"></i>Ajukan Review
                             </button>
+                            <router-link
+                                v-if="campaign.status === 'draft'"
+                                :to="`/campaigns/${campaign.id}/edit`"
+                                class="text-xs text-gray-400 hover:text-brand-400 transition-colors"
+                            >
+                                <i class="pi pi-pencil mr-1"></i>Edit
+                            </router-link>
+                            <button
+                                v-if="campaign.status === 'draft'"
+                                @click="confirmDelete(campaign)"
+                                class="text-xs text-gray-400 hover:text-red-400 transition-colors"
+                            >
+                                <i class="pi pi-trash mr-1"></i>Hapus
+                            </button>
                         </div>
+
+                        <!-- Delete Confirmation Modal -->
+                        <Transition name="fade">
+                            <div v-if="deleteModal.show && deleteModal.campaign?.id === campaign.id" class="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/60 backdrop-blur-sm" @click.self="closeDeleteModal">
+                                <div class="card w-full max-w-sm p-6">
+                                    <div class="text-center mb-4">
+                                        <div class="w-14 h-14 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-3">
+                                            <i class="pi pi-exclamation-triangle text-red-400 text-2xl"></i>
+                                        </div>
+                                        <h3 class="text-lg font-semibold text-white mb-1">Hapus Kampanye</h3>
+                                        <p class="text-sm text-gray-400">Apakah Anda yakin ingin menghapus kampanye <strong class="text-gray-300">"{{ deleteModal.campaign.title }}"</strong>? Tindakan ini tidak dapat dibatalkan.</p>
+                                    </div>
+                                    <div class="flex gap-3">
+                                        <button
+                                            @click="closeDeleteModal"
+                                            class="flex-1 px-4 py-2.5 rounded-md text-sm font-medium text-gray-400 hover:text-white hover:bg-navy-700 border border-navy-700 transition-all"
+                                        >
+                                            Batal
+                                        </button>
+                                        <button
+                                            @click="handleDelete"
+                                            :disabled="deleteModal.isDeleting"
+                                            class="flex-1 px-4 py-2.5 rounded-md text-sm font-medium bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20 transition-all disabled:opacity-50"
+                                        >
+                                            <i v-if="deleteModal.isDeleting" class="pi pi-spin pi-spinner mr-1"></i>
+                                            <i v-else class="pi pi-trash mr-1"></i>
+                                            Hapus
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </Transition>
                     </div>
                 </div>
             </div>
@@ -146,7 +193,9 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue';
+import { ref, onMounted } from 'vue';
+
+const brokenImages = ref(new Set());
 import { useCampaign } from '@/composables/useCampaign';
 import { useBacking } from '@/composables/useBacking';
 import { campaignApi } from '@/services/api';
@@ -155,6 +204,45 @@ import { useToast } from 'primevue/usetoast';
 const toast = useToast();
 const { formatCurrency, getProgress, getDaysRemaining } = useCampaign();
 const { myCampaigns, isLoading, meta, fetchMyCampaigns } = useBacking();
+
+// Delete modal state
+const deleteModal = ref({
+    show: false,
+    campaign: null,
+    isDeleting: false,
+});
+
+function confirmDelete(campaign) {
+    deleteModal.value = { show: true, campaign, isDeleting: false };
+}
+
+function closeDeleteModal() {
+    deleteModal.value = { show: false, campaign: null, isDeleting: false };
+}
+
+async function handleDelete() {
+    if (!deleteModal.value.campaign) return;
+    deleteModal.value.isDeleting = true;
+    try {
+        await campaignApi.delete(deleteModal.value.campaign.id);
+        toast.add({
+            severity: 'success',
+            summary: 'Berhasil',
+            detail: 'Kampanye berhasil dihapus.',
+            life: 3000,
+        });
+        closeDeleteModal();
+        await fetchMyCampaigns();
+    } catch (error) {
+        toast.add({
+            severity: 'error',
+            summary: 'Gagal',
+            detail: error.response?.data?.message || 'Gagal menghapus campaign',
+            life: 3000,
+        });
+        closeDeleteModal();
+    }
+}
 
 async function submitForReview(id) {
     try {

@@ -1,13 +1,25 @@
 <template>
     <div class="animate-fade-in">
-        <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
             <div>
                 <h2 class="text-xl font-semibold text-white">Manage Users</h2>
                 <p class="text-gray-500 text-sm mt-0.5">Daftar seluruh pengguna platform</p>
             </div>
-            <button @click="$emit('refresh')" class="text-sm text-brand-400 hover:text-brand-300 transition-colors">
-                <i class="pi pi-refresh mr-1"></i> Refresh
-            </button>
+            <div class="flex items-center gap-3">
+                <div class="relative">
+                    <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm"></i>
+                    <input
+                        v-model="searchQuery"
+                        type="text"
+                        placeholder="Cari nama atau email..."
+                        class="input-field pl-9 py-1.5 text-sm w-52"
+                        @input="debouncedSearch"
+                    />
+                </div>
+                <button @click="$emit('refresh')" class="text-sm text-brand-400 hover:text-brand-300 transition-colors">
+                    <i class="pi pi-refresh mr-1"></i> Refresh
+                </button>
+            </div>
         </div>
 
         <!-- Skeleton -->
@@ -51,8 +63,10 @@
                         <th class="pb-3 font-medium">User</th>
                         <th class="pb-3 font-medium">Email</th>
                         <th class="pb-3 font-medium">Role</th>
+                        <th class="pb-3 font-medium">Status</th>
                         <th class="pb-3 font-medium">Balance</th>
                         <th class="pb-3 font-medium">Joined</th>
+                        <th class="pb-3 font-medium text-right">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-navy-800/50">
@@ -86,10 +100,40 @@
                             >{{ user.role }}</span>
                         </td>
                         <td class="py-3 pr-4">
+                            <span
+                                :class="[
+                                    'text-xs font-medium px-2 py-0.5 rounded-sm',
+                                    user.is_suspended ? 'bg-red-500/10 text-red-400' : 'bg-green-500/10 text-green-400'
+                                ]"
+                            >{{ user.is_suspended ? 'Suspended' : 'Active' }}</span>
+                        </td>
+                        <td class="py-3 pr-4">
                             <span class="text-sm text-gray-300">{{ formatCurrency(user.balance || 0) }}</span>
                         </td>
                         <td class="py-3">
                             <span class="text-sm text-gray-500">{{ formatDate(user.created_at) }}</span>
+                        </td>
+                        <td class="py-3 text-right">
+                            <div class="flex items-center justify-end gap-1">
+                                <button
+                                    @click="openTransactionModal(user)"
+                                    class="p-1.5 rounded-md text-gray-500 hover:text-brand-400 hover:bg-brand-500/10 transition-all"
+                                    v-tooltip.top="'Lihat Riwayat Transaksi'"
+                                >
+                                    <i class="pi pi-receipt text-sm"></i>
+                                </button>
+                                <button
+                                    v-if="user.role !== 'admin'"
+                                    @click="handleToggleSuspend(user)"
+                                    :disabled="actionLoading === user.id"
+                                    class="p-1.5 rounded-md transition-all"
+                                    :class="user.is_suspended ? 'text-green-400 hover:bg-green-500/10' : 'text-orange-400 hover:bg-orange-500/10'"
+                                    v-tooltip.top="user.is_suspended ? 'Aktifkan' : 'Suspend'"
+                                >
+                                    <i v-if="actionLoading === user.id" class="pi pi-spin pi-spinner text-sm"></i>
+                                    <i v-else :class="[user.is_suspended ? 'pi pi-check-circle' : 'pi pi-ban', 'text-sm']"></i>
+                                </button>
+                            </div>
                         </td>
                     </tr>
                 </tbody>
@@ -112,11 +156,60 @@
                 </div>
             </div>
         </div>
+
+        <!-- Transaction History Modal -->
+        <Dialog
+            v-model:visible="showTransactionModal"
+            :header="`Riwayat Transaksi - ${selectedUser?.name || ''}`"
+            :modal="true"
+            class="w-full max-w-2xl"
+        >
+            <div v-if="txLoading" class="py-8 text-center text-gray-500">
+                <i class="pi pi-spin pi-spinner text-2xl mb-2"></i>
+                <p>Memuat transaksi...</p>
+            </div>
+            <div v-else-if="userTransactions.length === 0" class="py-8 text-center text-gray-500">
+                <i class="pi pi-receipt text-3xl mb-2 text-gray-600"></i>
+                <p>Tidak ada transaksi untuk user ini.</p>
+            </div>
+            <div v-else class="space-y-2 max-h-96 overflow-y-auto pr-1">
+                <div
+                    v-for="tx in userTransactions"
+                    :key="tx.id"
+                    class="flex items-center justify-between p-3 rounded-md bg-navy-800/50 border border-navy-700"
+                >
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-md flex items-center justify-center shrink-0" :class="tx.type === 'top_up' ? 'bg-green-500/10' : tx.type === 'payment' ? 'bg-brand-500/10' : tx.type === 'disbursement' ? 'bg-green-500/10' : 'bg-orange-500/10'">
+                            <i :class="['pi text-xs', getTxTypeIcon(tx.type), getTxTypeColor(tx.type)]"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-300">{{ getTxTypeLabel(tx.type) }}</p>
+                            <p class="text-xs text-gray-600">{{ tx.reference }}</p>
+                            <p v-if="tx.backing?.campaign" class="text-xs text-gray-600">{{ tx.backing.campaign.title }}</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p :class="['text-sm font-semibold', getTxTypeColor(tx.type)]">
+                            {{ tx.type === 'refund' || tx.type === 'top_up' || tx.type === 'disbursement' ? '+' : '-' }}
+                            {{ formatCurrency(tx.amount) }}
+                        </p>
+                        <p class="text-xs text-gray-600">{{ formatTxDate(tx.created_at) }}</p>
+                    </div>
+                </div>
+            </div>
+        </Dialog>
     </div>
 </template>
 
 <script setup>
+import { ref } from 'vue';
 import { useCampaign } from '@/composables/useCampaign';
+import { adminApi } from '@/services/api';
+import { useToast } from 'vue-toastification';
+import Dialog from 'primevue/dialog';
+import dayjs from '@/plugins/dayjs';
+
+const toast = useToast();
 
 const props = defineProps({
     loading: Boolean,
@@ -127,7 +220,23 @@ const props = defineProps({
 
 const emit = defineEmits(['fetch', 'refresh']);
 
+const searchQuery = ref('');
+let debounceTimer = null;
+
+function debouncedSearch() {
+    if (debounceTimer) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+        emit('fetch', 1, searchQuery.value);
+    }, 400);
+}
+
 const { formatCurrency } = useCampaign();
+
+const actionLoading = ref(null);
+const selectedUser = ref(null);
+const showTransactionModal = ref(false);
+const userTransactions = ref([]);
+const txLoading = ref(false);
 
 function getInitials(name) {
     if (!name) return '?';
@@ -136,10 +245,79 @@ function getInitials(name) {
 
 function formatDate(date) {
     if (!date) return '-';
-    return new Date(date).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' });
+    return dayjs(date).format('D MMM YYYY');
 }
 
 function goToPage(page) {
     emit('fetch', page);
+}
+
+async function handleToggleSuspend(user) {
+    actionLoading.value = user.id;
+    try {
+        if (user.is_suspended) {
+            await adminApi.reactivateUser(user.id);
+        } else {
+            await adminApi.suspendUser(user.id);
+        }
+        emit('refresh');
+    } catch (err) {
+        toast.error(err.response?.data?.message || 'Gagal memproses user');
+    } finally {
+        actionLoading.value = null;
+    }
+}
+
+async function openTransactionModal(user) {
+    selectedUser.value = user;
+    showTransactionModal.value = true;
+    txLoading.value = true;
+    userTransactions.value = [];
+    try {
+        const res = await adminApi.getUserTransactions(user.id);
+        userTransactions.value = res.data.data;
+    } catch {
+        userTransactions.value = [];
+    } finally {
+        txLoading.value = false;
+    }
+}
+
+function formatTxDate(date) {
+    if (!date) return '-';
+    return dayjs(date).format('DD MMM YYYY HH:mm');
+}
+
+function getTxTypeLabel(type) {
+    const labels = {
+        payment: 'Pembayaran Donasi',
+        top_up: 'Top-Up Saldo',
+        disbursement: 'Pencairan Dana',
+        refund: 'Pengembalian Dana',
+        platform_fee: 'Biaya Platform',
+    };
+    return labels[type] || type;
+}
+
+function getTxTypeColor(type) {
+    const colors = {
+        payment: 'text-brand-400',
+        top_up: 'text-green-400',
+        disbursement: 'text-green-400',
+        refund: 'text-orange-400',
+        platform_fee: 'text-purple-400',
+    };
+    return colors[type] || 'text-gray-400';
+}
+
+function getTxTypeIcon(type) {
+    const icons = {
+        payment: 'pi-arrow-right',
+        top_up: 'pi-arrow-down',
+        disbursement: 'pi-arrow-up',
+        refund: 'pi-arrow-left',
+        platform_fee: 'pi-percentage',
+    };
+    return icons[type] || 'pi-question';
 }
 </script>

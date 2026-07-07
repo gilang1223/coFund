@@ -6,6 +6,10 @@ export function useAuth() {
     const isLoading = ref(false);
     const error = ref(null);
 
+    const isAdminPage = () => window.location.pathname.startsWith('/admin');
+    const tokenKey = () => isAdminPage() ? 'admin_auth_token' : 'auth_token';
+    const userKey = () => isAdminPage() ? 'admin_auth_user' : 'auth_user';
+
     async function login(email, password) {
         isLoading.value = true;
         error.value = null;
@@ -13,7 +17,8 @@ export function useAuth() {
             const response = await authApi.login(email, password);
             const { token, user } = response.data.data;
 
-            localStorage.setItem('auth_token', token);
+            localStorage.setItem(tokenKey(), token);
+            localStorage.setItem(userKey(), JSON.stringify(user));
             const appStore = useAppStore();
             appStore.setUser(user);
 
@@ -33,7 +38,8 @@ export function useAuth() {
             const response = await authApi.register(data);
             const { token, user } = response.data.data;
 
-            localStorage.setItem('auth_token', token);
+            localStorage.setItem(tokenKey(), token);
+            localStorage.setItem(userKey(), JSON.stringify(user));
             const appStore = useAppStore();
             appStore.setUser(user);
 

@@ -12,7 +12,42 @@ use Illuminate\Support\Str;
 class CampaignService extends BaseService
 {
     /**
+     * Extract YouTube video ID from various YouTube URL formats.
+     */
+    public function extractYouTubeId(?string $url): ?string
+    {
+        if (!$url) return null;
+
+        $patterns = [
+            '/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/',
+            '/youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/',
+        ];
+
+        foreach ($patterns as $pattern) {
+            if (preg_match($pattern, $url, $matches)) {
+                return $matches[1];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Get YouTube thumbnail URL from video ID.
+     */
+    public function getYouTubeThumbnailUrl(?string $videoUrl): ?string
+    {
+        $videoId = $this->extractYouTubeId($videoUrl);
+        if (!$videoId) return null;
+
+        // Try maxresdefault first, fallback to hqdefault
+        return "https://img.youtube.com/vi/{$videoId}/maxresdefault.jpg";
+    }
+
+    /**
      * Get all campaigns with pagination.
+     * By default only shows 'active' campaigns to public.
+     * If status filter or user_id filter is provided, shows accordingly.
      */
     public function getAll(array $filters = [], int $perPage = 12)
     {
@@ -23,7 +58,11 @@ class CampaignService extends BaseService
         }
 
         if (!empty($filters['status'])) {
+            // Allow status filter for admin/creator views
             $query->where('status', $filters['status']);
+        } elseif (empty($filters['user_id'])) {
+            // Public listing: ONLY show 'active' campaigns (removed success/failed from public)
+            $query->where('status', 'active');
         }
 
         if (!empty($filters['category_id'])) {
@@ -81,6 +120,16 @@ class CampaignService extends BaseService
                     'is_primary' => $index === 0,
                 ]);
             }
+        } elseif (!empty($data['video_url'])) {
+            // Auto-generate YouTube thumbnail as primary image
+            $thumbnailUrl = $this->getYouTubeThumbnailUrl($data['video_url']);
+            if ($thumbnailUrl) {
+                CampaignImage::create([
+                    'campaign_id' => $campaign->id,
+                    'url' => $thumbnailUrl,
+                    'is_primary' => true,
+                ]);
+            }
         }
 
         // Create tiers if provided
@@ -131,6 +180,52 @@ class CampaignService extends BaseService
         }
         if (isset($data['video_url'])) {
             $updateData['video_url'] = $data['video_url'];
+
+            // Auto-generate YouTube thumbnail if primary image doesn't exist
+            if (!$campaign->primaryImage) {
+                $thumbnailUrl = $this->getYouTubeThumbnailUrl($data['video_url']);
+                if ($thumbnailUrl) {
+                    CampaignImage::create([
+                        'campaign_id' => $campaign->id,
+                        'url' => $thumbnailUrl,
+                        'is_primary' => true,
+                    ]);
+                }
+            }
+        }
+
+        // Sync tiers if provided
+        if (isset($data['tiers'])) {
+            $submittedIds = collect($data['tiers'])->pluck('id')->filter()->values()->toArray();
+
+            // Delete tiers removed from the form
+            $campaign->tiers()->whereNotIn('id', $submittedIds)->delete();
+
+            foreach ($data['tiers'] as $tierData) {
+                if (!empty($tierData['id'])) {
+                    // Update existing tier
+                    $tier = CampaignTier::find($tierData['id']);
+                    if ($tier && $tier->campaign_id === $campaign->id) {
+                        $tier->update([
+                            'name' => $tierData['name'],
+                            'min_amount' => $tierData['min_amount'],
+                            'quota' => $tierData['quota'],
+                            'remaining_quota' => $tierData['quota'],
+                            'reward_description' => $tierData['reward_description'] ?? null,
+                        ]);
+                    }
+                } else {
+                    // Create new tier
+                    CampaignTier::create([
+                        'campaign_id' => $campaign->id,
+                        'name' => $tierData['name'],
+                        'min_amount' => $tierData['min_amount'],
+                        'quota' => $tierData['quota'],
+                        'remaining_quota' => $tierData['quota'],
+                        'reward_description' => $tierData['reward_description'] ?? null,
+                    ]);
+                }
+            }
         }
 
         $campaign->update($updateData);
@@ -156,6 +251,7 @@ class CampaignService extends BaseService
 
     /**
      * Approve campaign (admin only).
+     * Can approve only from 'review' status to 'active'.
      */
     public function approve(int $id): ?Campaign
     {
@@ -167,13 +263,24 @@ class CampaignService extends BaseService
 
         $campaign->update(['status' => 'active']);
 
+        // Notify creator + send email
+        \App\Jobs\SendNotificationJob::dispatch(
+            $campaign->user_id,
+            'campaign_status',
+            'Kampanye Disetujui! 🎉',
+            "Kampanye \"{$campaign->title}\" telah disetujui dan sekarang aktif menerima donasi.",
+            ['campaign_id' => $campaign->id, 'status' => 'active'],
+            true, // send email
+        );
+
         return $campaign->fresh();
     }
 
     /**
      * Reject campaign (admin only).
+     * Reject from 'review' to 'draft' with rejection note for history.
      */
-    public function reject(int $id): ?Campaign
+    public function reject(int $id, ?string $rejectionNote = null): ?Campaign
     {
         $campaign = Campaign::find($id);
 
@@ -181,19 +288,39 @@ class CampaignService extends BaseService
             return null;
         }
 
-        $campaign->update(['status' => 'draft']);
+        $campaign->update([
+            'status'         => 'draft',
+            'rejection_note' => $rejectionNote,
+            'rejected_at'    => now(),
+        ]);
+
+        // Notify creator + send email
+        $noteText = $rejectionNote ? " Alasan: {$rejectionNote}" : '';
+        \App\Jobs\SendNotificationJob::dispatch(
+            $campaign->user_id,
+            'campaign_status',
+            'Kampanye Ditolak',
+            "Kampanye \"{$campaign->title}\" ditolak oleh admin.{$noteText} Silakan perbaiki dan ajukan kembali.",
+            ['campaign_id' => $campaign->id, 'status' => 'rejected', 'rejection_note' => $rejectionNote],
+            true, // send email
+        );
 
         return $campaign->fresh();
     }
 
     /**
-     * Delete a campaign.
+     * Delete a campaign (only allowed for 'draft' status).
      */
     public function delete(int $id): bool
     {
         $campaign = Campaign::find($id);
 
         if (!$campaign) {
+            return false;
+        }
+
+        // Rule 9: Kampanye tidak bisa dihapus setelah status bukan draft
+        if ($campaign->status !== 'draft') {
             return false;
         }
 

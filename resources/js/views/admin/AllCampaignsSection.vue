@@ -127,10 +127,10 @@
         </div>
     </div>
 </template>
-
 <script setup>
 import { ref } from 'vue';
 import { useCampaign } from '@/composables/useCampaign';
+import dayjs from '@/plugins/dayjs';
 
 const props = defineProps({
     loading: Boolean,
@@ -155,7 +155,7 @@ function debouncedSearch() {
 
 function formatDate(date) {
     if (!date) return '-';
-    return new Date(date).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' });
+    return dayjs(date).format('D MMM YYYY');
 }
 
 function goToPage(page) {

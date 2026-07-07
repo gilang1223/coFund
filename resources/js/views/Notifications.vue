@@ -85,21 +85,33 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import { notificationApi } from '@/services/api';
+import { onMounted, computed } from 'vue';
+import { useNotification } from '@/composables/useNotification';
+import dayjs from '@/plugins/dayjs';
 
-const notifications = ref([]);
-const loading = ref(true);
-const hasUnread = ref(false);
+const {
+    notifications,
+    unreadCount,
+    isLoading: loading,
+    fetchNotifications,
+    markAsRead,
+    markAllAsRead,
+} = useNotification();
+
+const hasUnread = computed(() => unreadCount.value > 0);
 
 function getIcon(type) {
     const icons = {
         campaign_success: 'pi pi-check-circle',
         campaign_failed: 'pi pi-times-circle',
+        campaign_status: 'pi pi-flag',
         backing_refunded: 'pi pi-undo',
         backing_completed: 'pi pi-heart',
+        backing_received: 'pi pi-heart',
         deadline_approaching: 'pi pi-clock',
         campaign_update: 'pi pi-megaphone',
+        creator_request: 'pi pi-star',
+        account: 'pi pi-shield',
         system: 'pi pi-info-circle',
     };
     return icons[type] || 'pi pi-bell';
@@ -109,71 +121,28 @@ function getIconClass(type) {
     const classes = {
         campaign_success: 'bg-green-500/10',
         campaign_failed: 'bg-red-500/10',
+        campaign_status: 'bg-brand-500/10',
         backing_refunded: 'bg-orange-500/10',
         backing_completed: 'bg-brand-500/10',
+        backing_received: 'bg-brand-500/10',
         deadline_approaching: 'bg-yellow-500/10',
         campaign_update: 'bg-purple-500/10',
+        creator_request: 'bg-yellow-500/10',
+        account: 'bg-orange-500/10',
         system: 'bg-blue-500/10',
     };
     return classes[type] || 'bg-navy-700/50';
 }
 
 function formatDate(dateStr) {
-    const date = new Date(dateStr);
-    const now = new Date();
-    const diff = now - date;
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(diff / 3600000);
-    const days = Math.floor(diff / 86400000);
+    const date = dayjs(dateStr);
+    const diffDays = dayjs().diff(date, 'day');
 
-    if (minutes < 1) return 'Baru saja';
-    if (minutes < 60) return `${minutes} menit lalu`;
-    if (hours < 24) return `${hours} jam lalu`;
-    if (days < 7) return `${days} hari lalu`;
-
-    return date.toLocaleDateString('id-ID', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-    });
-}
-
-async function fetchNotifications() {
-    loading.value = true;
-    try {
-        const res = await notificationApi.getAll();
-        notifications.value = res.data.data.notifications.data;
-        hasUnread.value = res.data.data.unread_count > 0;
-    } catch (err) {
-        console.error('Failed to fetch notifications:', err);
-    } finally {
-        loading.value = false;
+    if (diffDays < 7) {
+        return date.fromNow();
     }
-}
 
-async function markAsRead(notification) {
-    if (notification.read_at) return;
-    try {
-        await notificationApi.markAsRead(notification.id);
-        notification.read_at = new Date().toISOString();
-        hasUnread.value = notifications.value.some(n => !n.read_at);
-    } catch (err) {
-        console.error('Failed to mark as read:', err);
-    }
-}
-
-async function markAllAsRead() {
-    try {
-        await notificationApi.markAllAsRead();
-        notifications.value.forEach(n => {
-            if (!n.read_at) n.read_at = new Date().toISOString();
-        });
-        hasUnread.value = false;
-    } catch (err) {
-        console.error('Failed to mark all as read:', err);
-    }
+    return date.format('D MMM YYYY, HH:mm');
 }
 
 onMounted(fetchNotifications);

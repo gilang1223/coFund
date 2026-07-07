@@ -53,6 +53,8 @@ export function useTransaction() {
             disbursement: 'Pencairan Dana',
             refund: 'Pengembalian Dana',
             platform_fee: 'Biaya Platform',
+            top_up: 'Top-Up Saldo',
+            withdrawal: 'Penarikan Dana',
         };
         return labels[type] || type;
     }
@@ -63,6 +65,8 @@ export function useTransaction() {
             disbursement: 'pi-arrow-up',
             refund: 'pi-arrow-left',
             platform_fee: 'pi-percentage',
+            top_up: 'pi-arrow-down',
+            withdrawal: 'pi-arrow-up',
         };
         return icons[type] || 'pi-question';
     }
@@ -73,6 +77,8 @@ export function useTransaction() {
             disbursement: 'text-green-400',
             refund: 'text-orange-400',
             platform_fee: 'text-purple-400',
+            top_up: 'text-green-400',
+            withdrawal: 'text-yellow-400',
         };
         return colors[type] || 'text-gray-400';
     }

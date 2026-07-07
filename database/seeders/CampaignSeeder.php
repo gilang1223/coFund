@@ -25,6 +25,7 @@ class CampaignSeeder extends Seeder
                 'collected_amount' => 32500000,
                 'deadline' => Carbon::now()->addDays(45),
                 'status' => 'active',
+                'video_url' => 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
                 'tiers' => [
                     ['name' => 'Donatur', 'min_amount' => 50000, 'quota' => 100, 'reward_description' => 'Ucapan terima kasih di media sosial'],
                     ['name' => 'Pendukung', 'min_amount' => 100000, 'quota' => 50, 'reward_description' => 'Nama tercantum di dinding apresiasi perpustakaan'],
@@ -40,6 +41,7 @@ class CampaignSeeder extends Seeder
                 'collected_amount' => 45000000,
                 'deadline' => Carbon::now()->addDays(30),
                 'status' => 'active',
+                'video_url' => 'https://www.youtube.com/watch?v=jNQXAC9IVRw',
                 'tiers' => [
                     ['name' => 'Early Adopter', 'min_amount' => 100000, 'quota' => 200, 'reward_description' => 'Akses premium aplikasi 3 bulan + sticker pack digital'],
                     ['name' => 'Beta Tester', 'min_amount' => 250000, 'quota' => 100, 'reward_description' => 'Akses lifetime + nama di credit aplikasi'],
@@ -55,6 +57,7 @@ class CampaignSeeder extends Seeder
                 'collected_amount' => 78500000,
                 'deadline' => Carbon::now()->addDays(14),
                 'status' => 'active',
+                'video_url' => 'https://www.youtube.com/watch?v=9bZkp7q19f0',
                 'tiers' => [
                     ['name' => 'Peduli', 'min_amount' => 25000, 'quota' => 500, 'reward_description' => 'Laporan penyaluran bantuan'],
                     ['name' => 'Dermawan', 'min_amount' => 100000, 'quota' => 200, 'reward_description' => 'Laporan penyaluran + sertifikat digital'],
@@ -70,6 +73,7 @@ class CampaignSeeder extends Seeder
                 'collected_amount' => 55000000,
                 'deadline' => Carbon::now()->addDays(60),
                 'status' => 'active',
+                'video_url' => 'https://www.youtube.com/watch?v=kJQP7kiw5Fk',
                 'tiers' => [
                     ['name' => 'Penonton', 'min_amount' => 50000, 'quota' => 300, 'reward_description' => 'Tiket masuk festival + stiker'],
                     ['name' => 'Pencinta Seni', 'min_amount' => 200000, 'quota' => 100, 'reward_description' => 'Tiket VIP + kaos eksklusif festival'],
@@ -85,6 +89,7 @@ class CampaignSeeder extends Seeder
                 'collected_amount' => 25000000,
                 'deadline' => Carbon::now()->addDays(5),
                 'status' => 'active',
+                'video_url' => 'https://www.youtube.com/watch?v=JGwWNGJdvx8',
                 'tiers' => [
                     ['name' => 'Penanam', 'min_amount' => 25000, 'quota' => 500, 'reward_description' => '1 pohon mangrove atas namamu + e-sertifikat'],
                     ['name' => 'Pelestari', 'min_amount' => 100000, 'quota' => 100, 'reward_description' => '5 pohon mangrove + sertifikat + laporan dampak'],
@@ -100,6 +105,7 @@ class CampaignSeeder extends Seeder
                 'collected_amount' => 12000000,
                 'deadline' => Carbon::now()->addDays(21),
                 'status' => 'active',
+                'video_url' => 'https://www.youtube.com/watch?v=RgKAFK5djSk',
                 'tiers' => [
                     ['name' => 'Pencicip', 'min_amount' => 50000, 'quota' => 100, 'reward_description' => 'Paket produk keripik pisang 3 varian'],
                     ['name' => 'Konsumen', 'min_amount' => 150000, 'quota' => 50, 'reward_description' => 'Paket produk + diskon 20% seumur hidup'],
@@ -108,11 +114,24 @@ class CampaignSeeder extends Seeder
             ],
         ];
 
-        foreach ($campaigns as $data) {
+        foreach ($campaigns as $i => $data) {
             $tiers = $data['tiers'];
+            $videoUrl = $data['video_url'] ?? null;
             unset($data['tiers']);
 
             $campaign = Campaign::create($data);
+
+            // Create YouTube thumbnail as primary image
+            if ($videoUrl) {
+                $ytId = $this->extractYouTubeId($videoUrl);
+                if ($ytId) {
+                    CampaignImage::create([
+                        'campaign_id' => $campaign->id,
+                        'url' => "https://img.youtube.com/vi/{$ytId}/maxresdefault.jpg",
+                        'is_primary' => true,
+                    ]);
+                }
+            }
 
             // Create tiers
             foreach ($tiers as $tierData) {
@@ -126,5 +145,26 @@ class CampaignSeeder extends Seeder
                 ]);
             }
         }
+    }
+
+    /**
+     * Extract YouTube video ID from URL.
+     */
+    private function extractYouTubeId(?string $url): ?string
+    {
+        if (!$url) return null;
+
+        $patterns = [
+            '/(?:youtube\\.com\\/watch\\?v=|youtu\\.be\\/|youtube\\.com\\/embed\\/)([a-zA-Z0-9_-]{11})/',
+            '/youtube\\.com\\/shorts\\/([a-zA-Z0-9_-]{11})/',
+        ];
+
+        foreach ($patterns as $pattern) {
+            if (preg_match($pattern, $url, $matches)) {
+                return $matches[1];
+            }
+        }
+
+        return null;
     }
 }

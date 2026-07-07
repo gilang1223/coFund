@@ -13,11 +13,14 @@ class AuthService extends BaseService
     public function register(array $data): array
     {
         $user = User::create([
-            'name' => $data['name'],
-            'email' => $data['email'],
+            'name'     => $data['name'],
+            'email'    => $data['email'],
             'password' => Hash::make($data['password']),
-            'role' => $data['role'] ?? 'backer',
+            'role'     => 'backer',
         ]);
+
+        // Send email verification notification
+        $user->sendEmailVerificationNotification();
 
         $token = $user->createToken('auth-token')->plainTextToken;
 

@@ -63,7 +63,14 @@
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-2 mb-1">
                             <h3 class="font-semibold text-white truncate">{{ campaign.title }}</h3>
-                            <span class="badge-draft text-xs">review</span>
+                            <span
+                                :class="[
+                                    campaign.status === 'draft' ? 'badge-draft text-xs' :
+                                    campaign.status === 'review' ? 'badge-default text-xs' :
+                                    'badge-failed text-xs'
+                                ]">
+                                {{ campaign.status }}
+                            </span>
                         </div>
                         <p class="text-xs text-gray-500 mb-1">
                             oleh <span class="text-gray-400">{{ campaign.creator?.name || 'Unknown' }}</span>
@@ -122,6 +129,7 @@
 import { ref } from 'vue';
 import { campaignApi } from '@/services/api';
 import { useCampaign } from '@/composables/useCampaign';
+import dayjs from '@/plugins/dayjs';
 
 const props = defineProps({
     loading: Boolean,
@@ -137,7 +145,7 @@ const actionLoading = ref(null);
 
 function formatDate(date) {
     if (!date) return '-';
-    return new Date(date).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' });
+    return dayjs(date).format('D MMM YYYY');
 }
 
 function goToPage(page) {

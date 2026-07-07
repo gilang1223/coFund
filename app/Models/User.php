@@ -2,14 +2,16 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use App\Models\CreatorRequest;
+use App\Notifications\VerifyEmailNotification;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     use HasApiTokens, HasFactory, Notifiable;
 
@@ -24,6 +26,7 @@ class User extends Authenticatable
         'password',
         'role',
         'balance',
+        'is_suspended',
     ];
 
     /**
@@ -44,6 +47,7 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'balance' => 'decimal:2',
+        'is_suspended' => 'boolean',
     ];
 
     /**
@@ -120,5 +124,48 @@ class User extends Authenticatable
     public function userNotifications(): HasMany
     {
         return $this->hasMany(UserNotification::class, 'user_id');
+    }
+
+    /**
+     * Get the creator requests made by the user.
+     */
+    public function creatorRequests(): HasMany
+    {
+        return $this->hasMany(CreatorRequest::class, 'user_id');
+    }
+
+    /**
+     * Get the withdrawals made by the user.
+     */
+    public function withdrawals(): HasMany
+    {
+        return $this->hasMany(Withdrawal::class, 'user_id');
+    }
+
+    /**
+     * Check if the user has a pending creator request.
+     */
+    public function hasPendingCreatorRequest(): bool
+    {
+        return $this->creatorRequests()
+            ->where('status', CreatorRequest::STATUS_PENDING)
+            ->exists();
+    }
+
+    /**
+     * Send the email verification notification.
+     * Override the default MustVerifyEmail notification to use our custom one.
+     */
+    public function sendEmailVerificationNotification(): void
+    {
+        $this->notify(new VerifyEmailNotification);
+    }
+
+    /**
+     * Send the password reset notification.
+     */
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new \App\Notifications\ResetPasswordNotification($token));
     }
 }

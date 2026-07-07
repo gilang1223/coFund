@@ -13,11 +13,17 @@ export const useAppStore = defineStore('app', () => {
     const isAdmin = computed(() => user.value?.role === 'admin');
     const isCreator = computed(() => user.value?.role === 'creator');
     const isBacker = computed(() => user.value?.role === 'backer');
+    const hasVerifiedEmail = computed(() => !!user.value?.email_verified_at);
+    const isSuspended = computed(() => !!user.value?.is_suspended);
+
+    const isAdminPage = () => window.location.pathname.startsWith('/admin');
+    const tokenKey = () => isAdminPage() ? 'admin_auth_token' : 'auth_token';
+    const userKey = () => isAdminPage() ? 'admin_auth_user' : 'auth_user';
 
     // Actions
     async function fetchUser() {
         try {
-            const token = localStorage.getItem('auth_token');
+            const token = localStorage.getItem(tokenKey());
             if (!token) {
                 isAuthenticated.value = false;
                 user.value = null;
@@ -25,11 +31,13 @@ export const useAppStore = defineStore('app', () => {
             }
             const response = await authApi.getUser();
             user.value = response.data.data;
+            localStorage.setItem(userKey(), JSON.stringify(user.value));
             isAuthenticated.value = true;
         } catch (error) {
             user.value = null;
             isAuthenticated.value = false;
-            localStorage.removeItem('auth_token');
+            localStorage.removeItem(tokenKey());
+            localStorage.removeItem(userKey());
         }
     }
 
@@ -41,7 +49,8 @@ export const useAppStore = defineStore('app', () => {
     function clearUser() {
         user.value = null;
         isAuthenticated.value = false;
-        localStorage.removeItem('auth_token');
+        localStorage.removeItem(tokenKey());
+        localStorage.removeItem(userKey());
     }
 
     function showNotification(message, type = 'success') {
@@ -59,6 +68,8 @@ export const useAppStore = defineStore('app', () => {
         isAdmin,
         isCreator,
         isBacker,
+        hasVerifiedEmail,
+        isSuspended,
         fetchUser,
         setUser,
         clearUser,

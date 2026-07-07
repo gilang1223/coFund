@@ -15,48 +15,31 @@ class BackingController extends ApiController
     }
 
     /**
-     * Store a newly created backing.
+     * Store a newly created backing (pending) and auto-complete it (deduct from balance).
      */
     public function store(BackingRequest $request)
     {
+        if (auth()->user()?->isAdmin()) {
+            return $this->sendForbidden('Admin tidak diizinkan melakukan backing/donasi.');
+        }
+
         $data = $request->validated();
         $data['user_id'] = auth()->id();
 
         $backing = $this->backingService->create($data);
 
         if (!$backing) {
-            return $this->sendValidationError('Backing failed. Campaign may not be active or validation failed.');
+            return $this->sendValidationError('Backing gagal. Kampanye mungkin tidak aktif atau validasi gagal.');
         }
 
-        return $this->sendCreated('Backing created successfully', $backing);
-    }
+        // Auto-complete: deduct balance & increment campaign collected_amount
+        $completed = $this->backingService->complete($backing->id);
 
-    /**
-     * Complete a backing (payment success).
-     */
-    public function complete(int $id)
-    {
-        $backing = $this->backingService->complete($id);
-
-        if (!$backing) {
-            return $this->sendError('Backing cannot be completed', 400);
+        if (!$completed) {
+            return $this->sendError('Donasi gagal diproses. Saldo tidak mencukupi.', 400);
         }
 
-        return $this->sendResponse('Backing completed successfully', $backing);
-    }
-
-    /**
-     * Refund/cancel a backing.
-     */
-    public function refund(int $id)
-    {
-        $backing = $this->backingService->refund($id);
-
-        if (!$backing) {
-            return $this->sendError('Backing cannot be refunded', 400);
-        }
-
-        return $this->sendResponse('Backing refunded successfully', $backing);
+        return $this->sendCreated('Donasi berhasil!', $completed);
     }
 
     /**

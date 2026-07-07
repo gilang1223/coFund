@@ -7,12 +7,13 @@ use App\Models\Campaign;
 use App\Models\CampaignTier;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Jobs\SendNotificationJob;
 use Illuminate\Support\Facades\DB;
 
 class BackingService extends BaseService
 {
     /**
-     * Create a new backing (donation) — funds held in escrow.
+     * Create a new backing (donation) — pending, menunggu pembayaran via Midtrans.
      */
     public function create(array $data): ?Backing
     {
@@ -29,6 +30,11 @@ class BackingService extends BaseService
 
         // Check if campaign has already reached target
         if ($campaign->hasReachedTarget()) {
+            return null;
+        }
+
+        // Rule 4: Creator tidak bisa backing kampanye miliknya sendiri
+        if ($campaign->user_id === $data['user_id']) {
             return null;
         }
 
@@ -81,7 +87,11 @@ class BackingService extends BaseService
      */
     public function complete(int $backingId): ?Backing
     {
-        return DB::transaction(function () use ($backingId) {
+        $shouldTriggerSuccess = false;
+        $disbursementCampaignId = null;
+        $campaignTitle = null;
+
+        $result = DB::transaction(function () use ($backingId, &$shouldTriggerSuccess, &$disbursementCampaignId, &$campaignTitle) {
             $backing = Backing::lockForUpdate()->find($backingId);
 
             if (!$backing || $backing->status !== 'pending') {
@@ -128,9 +138,69 @@ class BackingService extends BaseService
             // Increment campaign collected amount
             $campaign->increment('collected_amount', $backing->amount);
 
+            // Refresh campaign to get updated collected_amount
+            $campaign->refresh();
+
+            // Evaluate campaign status: if target reached, trigger success & disbursement
+            if ($campaign->hasReachedTarget() && $campaign->status === 'active') {
+                $shouldTriggerSuccess = true;
+                $disbursementCampaignId = $campaign->id;
+                $campaignTitle = $campaign->title;
+            }
+
             return $backing->fresh()->load(['campaign', 'tier', 'transaction']);
         });
-    }
+
+        // Dispatch jobs AFTER the transaction has fully committed
+        // so sync queue processing works correctly
+        if ($shouldTriggerSuccess && $disbursementCampaignId) {
+            // Proses pencairan dana secara synchronous (bukan via queue)
+            app(\App\Services\TransactionService::class)->processDisbursement($disbursementCampaignId);
+
+            // Notify all backers that the campaign succeeded (synchronous)
+            $backings = Backing::where('campaign_id', $disbursementCampaignId)
+                ->where('status', 'completed')
+                ->get();
+
+            foreach ($backings as $backing) {
+                SendNotificationJob::dispatchSync(
+                    $backing->user_id,
+                    'campaign_success',
+                    'Kampanye Berhasil! 🎉',
+                    "Kampanye \"{$campaignTitle}\" yang Anda dukung telah berhasil mencapai target! Dana telah dicairkan ke creator (setelah fee 5%). Terima kasih atas dukungan Anda.",
+                    ['campaign_id' => $disbursementCampaignId, 'backing_id' => $backing->id],
+                    true, // send email
+                );
+            }
+        }
+ 
+         if ($result) {
+             $backer = User::find($result->user_id);
+             $campaign = Campaign::find($result->campaign_id);
+ 
+             // Notify creator (in-app only)
+             SendNotificationJob::dispatch(
+                 $campaign->user_id,
+                 'backing_received',
+                 'Donasi Baru Masuk! 💖',
+                 "{$backer->name} telah mendukung kampanye \"{$campaign->title}\" dengan donasi sebesar Rp " . number_format($result->amount, 0, ',', '.') . ".",
+                 ['campaign_id' => $campaign->id, 'backing_id' => $result->id],
+                 false, // send email
+             );
+ 
+             // Notify backer (in-app + email)
+             SendNotificationJob::dispatch(
+                 $result->user_id,
+                 'backing_completed',
+                 'Donasi Berhasil Dikonfirmasi! 🎉',
+                 "Terima kasih! Donasi Anda sebesar Rp " . number_format($result->amount, 0, ',', '.') . " untuk kampanye \"{$campaign->title}\" telah berhasil diterima.",
+                 ['campaign_id' => $campaign->id, 'backing_id' => $result->id],
+                 true, // send email
+             );
+         }
+ 
+         return $result;
+     }
 
     /**
      * Cancel/refund a backing — release funds back to backer.
@@ -163,6 +233,14 @@ class BackingService extends BaseService
 
             return $backing->fresh();
         });
+    }
+
+    /**
+     * Get a backing by ID.
+     */
+    public function getById(int $id): ?Backing
+    {
+        return Backing::with(['campaign', 'tier', 'transaction', 'backer'])->find($id);
     }
 
     /**

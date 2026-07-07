@@ -79,12 +79,19 @@
 
                 <!-- Video URL -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-1">URL Video (Opsional)</label>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">URL Video YouTube <span class="text-brand-500">*</span></label>
                     <InputText
                         v-model="form.video_url"
                         class="w-full"
                         placeholder="https://www.youtube.com/watch?v=..."
+                        @input="updateThumbnailPreview"
+                        :class="{ 'p-invalid': errors.video_url }"
                     />
+                    <small v-if="errors.video_url" class="text-orange-400">{{ errors.video_url }}</small>
+                    <small v-else class="text-gray-500 text-xs mt-1 block">Thumbnail akan diambil otomatis dari YouTube</small>
+                    <div v-if="thumbnailPreview" class="mt-2 rounded-md overflow-hidden border border-navy-700 w-48">
+                        <img :src="thumbnailPreview" alt="YouTube Thumbnail Preview" class="w-full h-auto" @error="thumbnailPreview = ''" />
+                    </div>
                 </div>
 
                 <!-- Tiers -->
@@ -140,8 +147,8 @@
                 <div class="flex gap-3">
                     <Button
                         type="submit"
-                        label="Simpan sebagai Draft"
-                        icon="pi pi-save"
+                        label="Ajukan Kampanye"
+                        icon="pi pi-send"
                         class="flex-1"
                         :loading="isLoading"
                     />
@@ -178,6 +185,26 @@ const categories = ref([]);
 const errors = ref({});
 const minDate = ref(dayjs().add(7, 'day').toDate());
 
+const thumbnailPreview = ref('');
+
+function extractYouTubeId(url) {
+    if (!url) return null;
+    const patterns = [
+        /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
+        /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/,
+    ];
+    for (const p of patterns) {
+        const match = url.match(p);
+        if (match) return match[1];
+    }
+    return null;
+}
+
+function updateThumbnailPreview() {
+    const id = extractYouTubeId(form.value.video_url);
+    thumbnailPreview.value = id ? `https://img.youtube.com/vi/${id}/maxresdefault.jpg` : '';
+}
+
 const form = ref({
     title: '',
     category_id: null,
@@ -213,6 +240,7 @@ async function handleCreate() {
     if (!form.value.description) errors.value.description = 'Deskripsi wajib diisi';
     if (!form.value.target_amount || form.value.target_amount < 100000) errors.value.target_amount = 'Minimal target Rp 100.000';
     if (!form.value.deadline) errors.value.deadline = 'Batas waktu wajib diisi';
+    if (!form.value.video_url) errors.value.video_url = 'URL video YouTube wajib diisi';
 
     if (Object.keys(errors.value).length) return;
 
