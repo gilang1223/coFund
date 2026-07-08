@@ -196,60 +196,143 @@
                 </div>
             </div>
 
-            <!-- Mobile menu -->
+            <!-- Mobile Menu -->
             <transition name="mobile-menu">
-                <div v-if="isMobileMenuOpen" class="md:hidden border-t border-navy-700/50 bg-navy-900/95 backdrop-blur-lg">                        <div class="px-4 py-3 space-y-1">
+                <div v-if="isMobileMenuOpen" class="md:hidden border-t border-navy-700/50 bg-navy-900/95 backdrop-blur-lg relative z-50 shadow-xl shadow-black/20">
+                    <div class="px-3 py-3 space-y-0.5">
+                        <!-- Campaigns -->
                         <router-link
                             to="/campaigns"
-                            class="block px-3 py-2.5 rounded-md text-sm font-medium text-gray-400 hover:text-white hover:bg-navy-700/50 transition-all"
+                            class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-gray-400 hover:text-white hover:bg-navy-700/50 transition-all"
                             @click="isMobileMenuOpen = false"
                         >
+                            <i class="pi pi-th-large w-4 text-center text-gray-600"></i>
                             Campaigns
                         </router-link>
+
                         <template v-if="appStore.isAuthenticated">
-                            <!-- Start Campaign: creator langsung navigasi, backer lihat modal -->
+                            <!-- Divider -->
+                            <div class="border-t border-navy-700/30 my-1.5"></div>
+
+                            <!-- Start Campaign -->
                             <button
                                 v-if="!appStore.isSuspended"
                                 @click="handleStartCampaignMobile"
-                                class="block w-full text-left px-3 py-2.5 rounded-md text-sm font-medium text-brand-400 hover:bg-brand-500/10 transition-all"
+                                class="flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-md text-sm font-medium text-brand-400 hover:bg-brand-500/10 transition-all"
                             >
-                                <i class="pi pi-plus mr-2 text-xs"></i>
+                                <i class="pi pi-plus w-4 text-center text-brand-500"></i>
                                 Start Campaign
                             </button>
+
+                            <!-- Dashboard (hidden for admin karena redirect ke admin) -->
+                            <router-link
+                                v-if="!appStore.isAdmin"
+                                to="/dashboard"
+                                class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-gray-400 hover:text-white hover:bg-navy-700/50 transition-all"
+                                @click="isMobileMenuOpen = false"
+                            >
+                                <i class="pi pi-chart-bar w-4 text-center text-gray-600"></i>
+                                Dashboard
+                            </router-link>
+
+                            <!-- Notifications -->
+                            <router-link
+                                to="/notifications"
+                                class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-gray-400 hover:text-white hover:bg-navy-700/50 transition-all"
+                                @click="isMobileMenuOpen = false"
+                            >
+                                <div class="relative w-4 flex justify-center">
+                                    <i class="pi pi-bell text-gray-600"></i>
+                                    <span
+                                        v-if="unreadCount > 0"
+                                        class="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 rounded-full bg-brand-500 text-white text-[8px] font-bold flex items-center justify-center"
+                                    >
+                                        {{ unreadCount > 9 ? '9+' : unreadCount }}
+                                    </span>
+                                </div>
+                                Notifikasi
+                            </router-link>
+
                             <!-- Profile -->
                             <router-link
                                 to="/profile"
-                                class="block px-3 py-2.5 rounded-md text-sm font-medium text-gray-400 hover:text-white hover:bg-navy-700/50 transition-all"
+                                class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-gray-400 hover:text-white hover:bg-navy-700/50 transition-all"
                                 @click="isMobileMenuOpen = false"
                             >
-                                <i class="pi pi-user mr-1.5"></i>
-                                Profil
+                                <i class="pi pi-user w-4 text-center text-gray-600"></i>
+                                Profil Saya
                             </router-link>
-                            <!-- Dashboard: hanya backer/creator -->
+
+                            <!-- Support Chat -->
                             <router-link
-                                to="/dashboard"
-                                class="block px-3 py-2.5 rounded-md text-sm font-medium text-gray-400 hover:text-white hover:bg-navy-700/50 transition-all"
+                                to="/support-chat"
+                                class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-gray-400 hover:text-white hover:bg-navy-700/50 transition-all"
                                 @click="isMobileMenuOpen = false"
                             >
-                                <i class="pi pi-user mr-1.5"></i>
-                                Dashboard
+                                <i class="pi pi-comments w-4 text-center text-gray-600"></i>
+                                Hubungi Admin
                             </router-link>
+
+                            <!-- Divider -->
+                            <div class="border-t border-navy-700/30 my-1.5"></div>
+
+                            <!-- Theme Toggle -->
+                            <button
+                                @click="toggleTheme"
+                                class="flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-md text-sm font-medium text-gray-400 hover:text-white hover:bg-navy-700/50 transition-all"
+                            >
+                                <i :class="['pi w-4 text-center text-gray-600', isDarkMode ? 'pi-sun' : 'pi-moon']"></i>
+                                {{ isDarkMode ? 'Mode Terang' : 'Mode Gelap' }}
+                            </button>
+
+                            <!-- Divider -->
+                            <div class="border-t border-navy-700/30 my-1.5"></div>
+
+                            <!-- Logout -->
+                            <button
+                                @click="handleLogoutMobile"
+                                class="flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-md text-sm font-medium text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all"
+                            >
+                                <i class="pi pi-sign-out w-4 text-center"></i>
+                                Logout
+                            </button>
                         </template>
+
                         <template v-else>
+                            <!-- Divider -->
+                            <div class="border-t border-navy-700/30 my-1.5"></div>
+
+                            <!-- Login -->
                             <router-link
                                 to="/login"
-                                class="block px-3 py-2.5 rounded-md text-sm font-medium text-gray-400 hover:text-white hover:bg-navy-700/50 transition-all"
+                                class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-gray-400 hover:text-white hover:bg-navy-700/50 transition-all"
                                 @click="isMobileMenuOpen = false"
                             >
+                                <i class="pi pi-sign-in w-4 text-center text-gray-600"></i>
                                 Login
                             </router-link>
+
+                            <!-- Register -->
                             <router-link
                                 to="/register"
-                                class="block px-3 py-2.5 rounded-md text-sm font-medium text-brand-400 hover:bg-brand-500/10 transition-all"
+                                class="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-brand-400 hover:bg-brand-500/10 transition-all"
                                 @click="isMobileMenuOpen = false"
                             >
+                                <i class="pi pi-user-plus w-4 text-center text-brand-500"></i>
                                 Register
                             </router-link>
+
+                            <!-- Divider -->
+                            <div class="border-t border-navy-700/30 my-1.5"></div>
+
+                            <!-- Theme Toggle -->
+                            <button
+                                @click="toggleTheme"
+                                class="flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-md text-sm font-medium text-gray-400 hover:text-white hover:bg-navy-700/50 transition-all"
+                            >
+                                <i :class="['pi w-4 text-center text-gray-600', isDarkMode ? 'pi-sun' : 'pi-moon']"></i>
+                                {{ isDarkMode ? 'Mode Terang' : 'Mode Gelap' }}
+                            </button>
                         </template>
                     </div>
                 </div>
@@ -354,7 +437,7 @@ onUnmounted(() => {
 });
 
 function handleStartCampaign() {
-    if (appStore.isCreator) {
+    if (appStore.isCreator || appStore.isAdmin) {
         router.push('/campaigns/create');
     } else {
         openCreatorModal();
@@ -369,6 +452,11 @@ function handleStartCampaignMobile() {
 async function handleLogout() {
     await logout();
     router.push('/');
+}
+
+async function handleLogoutMobile() {
+    isMobileMenuOpen = false;
+    await handleLogout();
 }
 
 async function sendVerifEmail() {

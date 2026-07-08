@@ -21,16 +21,16 @@ const routes = [
                 meta: { title: 'Campaigns' },
             },
             {
-                path: 'campaigns/:id',
-                name: 'campaign-detail',
-                component: () => import('@/views/CampaignDetail.vue'),
-                meta: { title: 'Campaign Detail' },
-            },
-            {
                 path: 'campaigns/create',
                 name: 'campaign-create',
                 component: () => import('@/views/CampaignCreate.vue'),
                 meta: { title: 'Buat Campaign', requiresAuth: true, requiresCreator: true },
+            },
+            {
+                path: 'campaigns/:id',
+                name: 'campaign-detail',
+                component: () => import('@/views/CampaignDetail.vue'),
+                meta: { title: 'Campaign Detail' },
             },
             {
                 path: 'campaigns/:id/edit',
@@ -218,8 +218,8 @@ router.beforeEach((to, from, next) => {
         return;
     }
 
-    // Hanya creator yang boleh buat/kelola campaign
-    if (to.meta.requiresCreator && role !== 'creator') {
+    // Hanya creator & admin yang boleh buat/kelola campaign
+    if (to.meta.requiresCreator && role !== 'creator' && role !== 'admin') {
         next({ name: 'home' });
         return;
     }

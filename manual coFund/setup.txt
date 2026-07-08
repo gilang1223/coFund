@@ -1,3 +1,0 @@
-backend : Laravel 10
-php ver : 8.2
-frontend : vue.js
