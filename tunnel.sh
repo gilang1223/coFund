@@ -123,6 +123,10 @@ cmd_start() {
     echo -e "${YELLOW}[1/4] Membersihkan proses lama...${NC}"
     kill_process_on_port $LARAVEL_PORT
     kill_cloudflared
+    if [ -f "$PROJECT_DIR/public/hot" ]; then
+        echo -e "  └─ Menghapus public/hot lama..."
+        rm -f "$PROJECT_DIR/public/hot"
+    fi
     sleep 1
 
     cd "$PROJECT_DIR" || exit 1
@@ -130,7 +134,7 @@ cmd_start() {
     echo -e "${YELLOW}[2/4] Menjalankan Laravel server...${NC}"
     export APP_ENV=production
     export APP_DEBUG=false
-    nohup php artisan serve --host=0.0.0.0 --port=$LARAVEL_PORT > "$LARAVEL_LOG" 2>&1 &
+    nohup /d/laragon/bin/php/php-8.2.31-Win32-vs16-x64/php artisan serve --host=0.0.0.0 --port=$LARAVEL_PORT > "$LARAVEL_LOG" 2>&1 &
     LARAVEL_PID=$!
     echo -e "  └─ PID: ${GREEN}$LARAVEL_PID${NC}"
 

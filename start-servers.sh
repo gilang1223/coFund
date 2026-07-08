@@ -9,7 +9,7 @@ sleep 1
 # Start Laravel in production mode (uses built assets from public/build/)
 export APP_ENV=production
 export APP_DEBUG=false
-nohup php artisan serve --host=0.0.0.0 --port=8000 > /tmp/laravel.log 2>&1 &
+nohup /d/laragon/bin/php/php-8.2.31-Win32-vs16-x64/php artisan serve --host=0.0.0.0 --port=8000 > /tmp/laravel.log 2>&1 &
 echo "Laravel PID: $!"
 
 # Start Vite dev server (for local development, accessible via host)
