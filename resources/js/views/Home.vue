@@ -14,8 +14,8 @@
                         class="w-full h-full object-cover object-center"
                     />
                     <!-- Dark Overlay -->
-                    <div class="absolute inset-0 bg-gradient-to-r from-navy-950/95 via-navy-950/85 to-navy-950/70"></div>
-                    <div class="absolute inset-0 bg-gradient-to-t from-navy-950 via-transparent to-navy-950/30"></div>
+                    <div class="absolute inset-0 bg-gradient-to-r from-navy-950/95 via-navy-950/85 to-navy-950/70 hero-overlay-x"></div>
+                    <div class="absolute inset-0 bg-gradient-to-t from-navy-950 via-transparent to-navy-950/30 hero-overlay-y"></div>
                 </div>
             </div>
 

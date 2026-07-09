@@ -17,8 +17,8 @@
         </div>
 
         <!-- Search & Filters -->
-        <div class="flex flex-wrap gap-3 mb-4">
-            <div class="relative flex-1 min-w-[200px] max-w-sm">
+        <div class="flex flex-col sm:flex-row gap-3 mb-4">
+            <div class="relative w-full sm:flex-1 sm:max-w-sm">
                 <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm"></i>
                 <input
                     v-model="searchQuery"
@@ -30,7 +30,7 @@
             </div>
             <select
                 v-model="filterCategory"
-                class="input-field w-auto min-w-[160px] transition-all duration-200 focus:border-brand-500/50"
+                class="input-field w-full sm:w-auto sm:min-w-[160px] transition-all duration-200 focus:border-brand-500/50"
                 @change="fetchData"
             >
                 <option value="">Semua Kategori</option>

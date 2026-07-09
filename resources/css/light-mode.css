@@ -49,6 +49,23 @@
     background-color: var(--bg-nav) !important;
 }
 
+/* Nav links styling for light mode */
+.light-mode nav a:not(.group),
+.light-mode nav button {
+    color: var(--text-secondary) !important;
+}
+
+.light-mode nav a:not(.group):hover,
+.light-mode nav button:hover {
+    color: var(--text-primary) !important;
+    background-color: var(--bg-tertiary) !important;
+}
+
+.light-mode nav a.text-brand-400 {
+    color: #FF6363 !important;
+    background-color: rgba(255, 99, 99, 0.1) !important;
+}
+
 .light-mode .bg-navy-950 {
     background-color: var(--bg-primary) !important;
 }
@@ -90,6 +107,7 @@
 
 .light-mode .card-hover:hover {
     border-color: var(--border-hover) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05) !important;
 }
 
 /* Text colors */
@@ -179,6 +197,16 @@
     color: var(--text-primary) !important;
 }
 
+.light-mode .btn-brand,
+.light-mode .bg-brand-500,
+.light-mode .bg-brand-600,
+.light-mode .bg-green-500,
+.light-mode .bg-red-500,
+.light-mode .bg-orange-500,
+.light-mode .bg-blue-500 {
+    color: #FFFFFF !important;
+}
+
 /* Skeleton */
 .light-mode .skeleton {
     background-color: #E5E7EB !important;
@@ -229,6 +257,15 @@
     background: radial-gradient(ellipse at top, rgba(255, 99, 99, 0.03) 0%, transparent 70%);
 }
 
+/* Hero section light mode overrides */
+.light-mode .hero-overlay-x {
+    background: linear-gradient(to right, rgba(248, 249, 250, 0.95) 0%, rgba(248, 249, 250, 0.85) 50%, rgba(248, 249, 250, 0.70) 100%) !important;
+}
+
+.light-mode .hero-overlay-y {
+    background: linear-gradient(to top, rgba(248, 249, 250, 1) 0%, transparent 70%, rgba(248, 249, 250, 0.3) 100%) !important;
+}
+
 /* Footer */
 .light-mode footer {
     border-top-color: var(--border-color) !important;
@@ -238,6 +275,28 @@
 /* Mobile menu */
 .light-mode .md\\:hidden.border-t {
     border-top-color: var(--border-color) !important;
+}
+
+/* Mobile drawer styling overrides for light mode */
+.light-mode .md\:hidden.bg-navy-900\/95 a,
+.light-mode .md\:hidden.bg-navy-900\/95 button {
+    color: var(--text-secondary) !important;
+}
+
+.light-mode .md\:hidden.bg-navy-900\/95 a:hover,
+.light-mode .md\:hidden.bg-navy-900\/95 button:hover {
+    background-color: var(--bg-tertiary) !important;
+    color: var(--text-primary) !important;
+}
+
+.light-mode .md\:hidden.bg-navy-900\/95 a i,
+.light-mode .md\:hidden.bg-navy-900\/95 button i {
+    color: var(--text-secondary) !important;
+}
+
+.light-mode .md\:hidden.bg-navy-900\/95 a:hover i,
+.light-mode .md\:hidden.bg-navy-900\/95 button:hover i {
+    color: var(--text-primary) !important;
 }
 
 /* Hover states */

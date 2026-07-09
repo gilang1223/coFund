@@ -119,19 +119,19 @@ function getIcon(type) {
 
 function getIconClass(type) {
     const classes = {
-        campaign_success: 'bg-green-500/10',
-        campaign_failed: 'bg-red-500/10',
-        campaign_status: 'bg-brand-500/10',
-        backing_refunded: 'bg-orange-500/10',
-        backing_completed: 'bg-brand-500/10',
-        backing_received: 'bg-brand-500/10',
-        deadline_approaching: 'bg-yellow-500/10',
-        campaign_update: 'bg-purple-500/10',
-        creator_request: 'bg-yellow-500/10',
-        account: 'bg-orange-500/10',
-        system: 'bg-blue-500/10',
+        campaign_success: 'bg-green-500/10 text-green-500 dark:text-green-400',
+        campaign_failed: 'bg-red-500/10 text-red-500 dark:text-red-400',
+        campaign_status: 'bg-brand-500/10 text-brand-500 dark:text-brand-400',
+        backing_refunded: 'bg-orange-500/10 text-orange-500 dark:text-orange-400',
+        backing_completed: 'bg-brand-500/10 text-brand-500 dark:text-brand-400',
+        backing_received: 'bg-brand-500/10 text-brand-500 dark:text-brand-400',
+        deadline_approaching: 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400',
+        campaign_update: 'bg-purple-500/10 text-purple-500 dark:text-purple-400',
+        creator_request: 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400',
+        account: 'bg-orange-500/10 text-orange-500 dark:text-orange-400',
+        system: 'bg-blue-500/10 text-blue-500 dark:text-blue-400',
     };
-    return classes[type] || 'bg-navy-700/50';
+    return classes[type] || 'bg-navy-700/50 text-gray-500 dark:text-gray-400';
 }
 
 function formatDate(dateStr) {

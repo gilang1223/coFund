@@ -166,20 +166,20 @@
                         <template v-else>
                             <router-link
                                 to="/login"
-                                class="px-4 py-2 text-sm font-medium text-gray-300 hover:text-white transition-colors duration-200"
+                                class="hidden md:inline-flex px-4 py-2 text-sm font-medium text-gray-300 hover:text-white transition-colors duration-200"
                             >
                                 Login
                             </router-link>
                             <router-link
                                 to="/register"
-                                class="px-4 py-2 bg-brand-500 text-white text-sm font-medium rounded-md hover:bg-brand-600 transition-all duration-200"
+                                class="hidden md:inline-flex px-4 py-2 bg-brand-500 text-white text-sm font-medium rounded-md hover:bg-brand-600 transition-all duration-200"
                             >
                                 Register
                             </router-link>
                             <!-- Theme Toggle for non-logged-in users -->
                             <button
                                 @click="toggleTheme"
-                                class="p-2 rounded-md text-gray-500 hover:text-gray-300 hover:bg-navy-700/50 transition-all duration-200"
+                                class="hidden md:inline-flex p-2 rounded-md text-gray-500 hover:text-gray-300 hover:bg-navy-700/50 transition-all duration-200"
                                 v-tooltip.bottom="isDarkMode ? 'Mode Terang' : 'Mode Gelap'"
                             >
                                 <i :class="['text-lg', isDarkMode ? 'pi pi-sun' : 'pi pi-moon']"></i>
