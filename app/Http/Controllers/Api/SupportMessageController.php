@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\SupportMessage;
+use App\Models\User;
+use App\Jobs\SendNotificationJob;
 use Illuminate\Http\Request;
 
 class SupportMessageController extends ApiController
@@ -39,6 +41,19 @@ class SupportMessageController extends ApiController
             'message' => $request->message,
             'is_from_admin' => false,
         ]);
+
+        // Notify all admins
+        $admins = User::where('role', 'admin')->get();
+        foreach ($admins as $admin) {
+            SendNotificationJob::dispatch(
+                $admin->id,
+                'system',
+                'Pesan Baru dari User 💬',
+                'Ada pesan support baru dari ' . auth()->user()->name . ': "' . \Illuminate\Support\Str::limit($request->message, 50) . '"',
+                ['user_id' => auth()->id(), 'message_id' => $message->id],
+                false // don't send email
+            );
+        }
 
         return $this->sendCreated('Pesan terkirim', $message);
     }
@@ -114,6 +129,16 @@ class SupportMessageController extends ApiController
             'message' => $request->message,
             'is_from_admin' => true,
         ]);
+
+        // Notify the user
+        SendNotificationJob::dispatch(
+            $userId,
+            'system',
+            'Balasan dari Admin 💬',
+            'Admin membalas pesan support Anda: "' . \Illuminate\Support\Str::limit($request->message, 50) . '"',
+            ['admin_id' => auth()->id(), 'message_id' => $message->id],
+            false // don't send email
+        );
 
         return $this->sendCreated('Balasan terkirim', $message);
     }

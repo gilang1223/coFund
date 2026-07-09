@@ -49,16 +49,20 @@ class SendNotificationJob implements ShouldQueue
 
         // Send email if requested
         if ($this->sendEmail) {
-            $user = User::find($this->userId);
-            if ($user && $user->email) {
-                Mail::to($user->email)->send(
-                    new CampaignNotification(
-                        user: $user,
-                        subject: $this->title,
-                        body: $this->body,
-                        data: $this->data,
-                    )
-                );
+            try {
+                $user = User::find($this->userId);
+                if ($user && $user->email) {
+                    Mail::to($user->email)->send(
+                        new CampaignNotification(
+                            user: $user,
+                            subject: $this->title,
+                            body: $this->body,
+                            data: $this->data,
+                        )
+                    );
+                }
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error("Failed to send email notification to user {$this->userId}: " . $e->getMessage());
             }
         }
     }

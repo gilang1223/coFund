@@ -192,7 +192,7 @@ async function handleLogout() {
 }
 
 function handleLogoutMobile() {
-    isMobileMenuOpen = false;
+    isMobileMenuOpen.value = false;
     handleLogout();
 }
 </script>

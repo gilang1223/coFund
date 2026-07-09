@@ -445,7 +445,7 @@ function handleStartCampaign() {
 }
 
 function handleStartCampaignMobile() {
-    isMobileMenuOpen = false;
+    isMobileMenuOpen.value = false;
     handleStartCampaign();
 }
 
@@ -455,7 +455,7 @@ async function handleLogout() {
 }
 
 async function handleLogoutMobile() {
-    isMobileMenuOpen = false;
+    isMobileMenuOpen.value = false;
     await handleLogout();
 }
 
