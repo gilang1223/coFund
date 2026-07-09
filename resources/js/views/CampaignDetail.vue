@@ -67,7 +67,7 @@
                                 {{ campaign.category?.name }}
                             </span>
                         </div>
-                        <h1 class="text-2xl md:text-3xl font-bold text-white mb-2">{{ campaign.title }}</h1>
+                        <h1 class="text-2xl md:text-3xl font-bold text-white mb-2 break-words">{{ campaign.title }}</h1>
                         <p class="text-gray-500">
                             oleh <span class="font-medium text-gray-300">{{ campaign.creator?.name || 'Anonymous' }}</span>
                             &middot; Dibuat {{ formatDate(campaign.created_at) }}
@@ -77,7 +77,7 @@
                     <!-- Description -->
                     <div class="card p-6">
                         <h2 class="text-lg font-semibold text-white mb-4">Tentang Kampanye</h2>
-                        <p class="text-gray-400 leading-relaxed whitespace-pre-line">{{ campaign.description }}</p>
+                        <p class="text-gray-400 leading-relaxed whitespace-pre-line break-words">{{ campaign.description }}</p>
                     </div>
 
                     <!-- Updates -->

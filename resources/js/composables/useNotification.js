@@ -11,8 +11,8 @@ export function useNotification() {
     const unreadCount = ref(0);
     const isLoading = ref(false);
 
-    async function fetchNotifications(params = {}) {
-        isLoading.value = true;
+    async function fetchNotifications(params = {}, silent = false) {
+        if (!silent) isLoading.value = true;
         try {
             const res = await notificationApi.getAll(params);
             notifications.value = res.data.data.notifications.data;
@@ -20,7 +20,7 @@ export function useNotification() {
         } catch (err) {
             console.error('Failed to fetch notifications:', err);
         } finally {
-            isLoading.value = false;
+            if (!silent) isLoading.value = false;
         }
     }
 

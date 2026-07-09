@@ -85,7 +85,7 @@
 </template>
 
 <script setup>
-import { onMounted, computed } from 'vue';
+import { onMounted, onUnmounted, computed } from 'vue';
 import { useNotification } from '@/composables/useNotification';
 import dayjs from '@/plugins/dayjs';
 
@@ -97,6 +97,8 @@ const {
     markAsRead,
     markAllAsRead,
 } = useNotification();
+
+let pollInterval = null;
 
 const hasUnread = computed(() => unreadCount.value > 0);
 
@@ -145,5 +147,15 @@ function formatDate(dateStr) {
     return date.format('D MMM YYYY, HH:mm');
 }
 
-onMounted(fetchNotifications);
+onMounted(() => {
+    fetchNotifications();
+    // Poll every 5 seconds silently in the background
+    pollInterval = setInterval(() => {
+        fetchNotifications({}, true);
+    }, 5000);
+});
+
+onUnmounted(() => {
+    if (pollInterval) clearInterval(pollInterval);
+});
 </script>

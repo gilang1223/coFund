@@ -149,11 +149,11 @@
                     </router-link>
                     <div class="p-5">
                         <router-link :to="`/campaigns/${campaign.id}`">
-                            <h3 class="font-semibold text-white mb-2 group-hover:text-brand-400 transition-colors line-clamp-2 text-sm">
+                            <h3 class="font-semibold text-white mb-2 group-hover:text-brand-400 transition-colors line-clamp-2 text-sm break-words">
                                 {{ campaign.title }}
                             </h3>
                         </router-link>
-                        <p class="text-sm text-gray-500 mb-2 line-clamp-2">
+                        <p class="text-sm text-gray-500 mb-2 line-clamp-2 break-words">
                             {{ campaign.description }}
                         </p>
                         <p class="text-xs text-gray-600 mb-4">

@@ -179,7 +179,7 @@ onMounted(() => {
     pollInterval = setInterval(() => {
         fetchUnreadCount();
         updateNavBadges();
-    }, 30000);
+    }, 5000);
 });
 
 onUnmounted(() => {

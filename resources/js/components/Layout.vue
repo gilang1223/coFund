@@ -428,8 +428,8 @@ let pollInterval = null;
 
 onMounted(() => {
     fetchUnreadCount();
-    // Poll every 30 seconds
-    pollInterval = setInterval(fetchUnreadCount, 30000);
+    // Poll every 5 seconds
+    pollInterval = setInterval(fetchUnreadCount, 5000);
 });
 
 onUnmounted(() => {
