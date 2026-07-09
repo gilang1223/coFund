@@ -127,6 +127,7 @@ const router = useRouter();
 const route = useRoute();
 const appStore = useAppStore();
 const { logout } = useAuth();
+const { isDarkMode, toggleTheme } = useTheme();
 const isMobileMenuOpen = ref(false);
 const unreadCount = ref(0);
 let pollInterval = null;
